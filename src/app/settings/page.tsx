@@ -10,6 +10,8 @@ const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[
   { key: "name_enabled", label: "Nom affiché / username", icon: "👤" },
   { key: "link_enabled", label: "Lien en bio", icon: "🔗" },
   { key: "private_public_enabled", label: "Compte privé/public", icon: "🔒" },
+  { key: "followers_enabled", label: "Variation d'abonnés", icon: "📈" },
+  { key: "posts_enabled", label: "Nouveaux posts", icon: "🖼️" },
   { key: "email_enabled", label: "Alertes email", icon: "✉️" },
   { key: "push_enabled", label: "Alertes push", icon: "🔔" },
 ];

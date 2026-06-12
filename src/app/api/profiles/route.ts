@@ -6,33 +6,25 @@ import { PLAN_LIMITS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/profiles — profils suivis + user
+// GET /api/profiles — profils suivis + user + compteurs non-vus
 export async function GET() {
   try {
     const store = getStore();
     const userId = getCurrentUserId();
-    const [profiles, user, changes] = await Promise.all([
-      store.listProfiles(userId),
+    const [tracked, user, unseenByProfile] = await Promise.all([
+      store.listTracked(userId),
       store.getUser(userId),
-      store.listChanges(userId, { limit: 50 }),
+      store.unseenByProfile(userId),
     ]);
-    const unseenByProfile: Record<string, number> = {};
-    for (const c of changes) {
-      if (!c.seen) unseenByProfile[c.tracked_profile_id] = (unseenByProfile[c.tracked_profile_id] ?? 0) + 1;
-    }
-    return NextResponse.json({
-      profiles,
-      user,
-      unseenByProfile,
-      limits: PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter,
-    });
+    const limits = PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter;
+    return NextResponse.json({ tracked, user, unseenByProfile, limits });
   } catch (e) {
     console.error("[api/profiles GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
-// POST /api/profiles { username } — ajouter un profil public
+// POST /api/profiles { username } — suivre un profil public
 export async function POST(req: NextRequest) {
   try {
     const store = getStore();
@@ -48,14 +40,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Username invalide" }, { status: 400 });
     }
 
-    const [user, existing] = await Promise.all([store.getUser(userId), store.listProfiles(userId)]);
+    const [user, tracked] = await Promise.all([store.getUser(userId), store.listTracked(userId)]);
 
-    if (existing.some((p) => p.username === username)) {
+    if (tracked.some((t) => t.profile.username === username)) {
       return NextResponse.json({ error: `@${username} est déjà suivi` }, { status: 409 });
     }
 
     const limit = (PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter).maxProfiles;
-    if (existing.length >= limit) {
+    if (tracked.length >= limit) {
       return NextResponse.json(
         { error: `Limite ${limit} profils atteinte. Passe premium pour en suivre plus.`, upgrade: true },
         { status: 403 },
@@ -67,9 +59,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `@${username} introuvable` }, { status: 404 });
     }
 
-    const profile = await store.addProfile(userId, fresh);
-    await store.addSnapshot(profile.id, fresh); // baseline
-
+    // crée/récupère le profil GLOBAL + lie le user (fetch partagé)
+    const profile = await store.trackProfile(userId, fresh);
     return NextResponse.json({ profile }, { status: 201 });
   } catch (e) {
     console.error("[api/profiles POST]", e);

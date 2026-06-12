@@ -9,6 +9,8 @@ const BOOL_KEYS = [
   "name_enabled",
   "link_enabled",
   "private_public_enabled",
+  "followers_enabled",
+  "posts_enabled",
   "push_enabled",
   "email_enabled",
 ] as const;

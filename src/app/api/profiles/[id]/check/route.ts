@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStore, getCurrentUserId } from "@/lib/store";
-import { checkProfile } from "@/lib/checker";
+import { checkPlatformProfile } from "@/lib/checker";
 import { rateLimit } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/profiles/:id/check — check manuel immédiat
+// POST /api/profiles/:id/check — check manuel immédiat du profil global
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -16,11 +16,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Trop de checks. Réessaie dans une minute." }, { status: 429 });
     }
 
-    const profile = await store.getProfile(userId, id);
+    const profile = await store.getTrackedProfile(userId, id);
     if (!profile) return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
 
-    const changes = await checkProfile(profile);
-    return NextResponse.json({ changes, count: changes.length });
+    const result = await checkPlatformProfile(profile);
+    return NextResponse.json({ count: result.changes });
   } catch (e) {
     console.error("[api/check]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

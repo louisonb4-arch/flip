@@ -3,11 +3,11 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell, ChangeRow, EmptyState, timeAgo } from "@/components/ui";
-import type { ProfileChange, TrackedProfile } from "@/lib/types";
+import type { PlatformProfile, UserNotification } from "@/lib/types";
 
 interface Data {
-  profile: TrackedProfile;
-  changes: ProfileChange[];
+  profile: PlatformProfile;
+  changes: UserNotification[];
 }
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {

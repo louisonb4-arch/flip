@@ -32,10 +32,14 @@ function hash(s: string): number {
   return Math.abs(h);
 }
 
+// Compteur d'appels (debug/tests) — prouve le fetch partagé.
+export const fetchCounter: Record<string, number> = {};
+
 export class MockFetcher implements ProfileFetcher {
   name = "mock";
 
   async fetchProfile(username: string): Promise<PublicProfile | null> {
+    fetchCounter[username] = (fetchCounter[username] ?? 0) + 1;
     const h = hash(username);
     // "tick" change toutes les ~2 minutes → simule un profil qui évolue
     const tick = Math.floor(Date.now() / 120_000);

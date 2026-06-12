@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell, ChangeRow, EmptyState } from "@/components/ui";
-import type { ProfileChange } from "@/lib/types";
+import { DigestCard } from "@/components/digest";
+import type { UserNotification } from "@/lib/types";
 
 const FILTERS = [
   { value: "", label: "Tout" },
@@ -11,10 +12,12 @@ const FILTERS = [
   { value: "photo", label: "Photo" },
   { value: "bio_link", label: "Lien" },
   { value: "display_name", label: "Nom" },
+  { value: "followers", label: "Abonnés" },
+  { value: "posts", label: "Posts" },
 ];
 
 export default function HistoryPage() {
-  const [changes, setChanges] = useState<ProfileChange[] | null>(null);
+  const [changes, setChanges] = useState<UserNotification[] | null>(null);
   const [filter, setFilter] = useState("");
   const [limited, setLimited] = useState(false);
 
@@ -35,8 +38,12 @@ export default function HistoryPage() {
 
   return (
     <AppShell>
-      <h1 className="text-3xl font-extrabold">Historique</h1>
+      <h1 className="text-3xl font-extrabold">Updates</h1>
       <p className="mt-1 text-sm text-gray-400">Tous les changements détectés.</p>
+
+      <div className="mt-5">
+        <DigestCard />
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (

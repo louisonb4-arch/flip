@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell, EmptyState, timeAgo } from "@/components/ui";
-import type { TrackedProfile, User } from "@/lib/types";
+import type { User, UserTrackedProfile } from "@/lib/types";
 
 interface Data {
-  profiles: TrackedProfile[];
+  tracked: UserTrackedProfile[];
   user: User;
   unseenByProfile: Record<string, number>;
   limits: { maxProfiles: number };
@@ -53,7 +53,7 @@ export default function Dashboard() {
     await load();
   }
 
-  const count = data?.profiles.length ?? 0;
+  const count = data?.tracked.length ?? 0;
   const max = data?.limits.maxProfiles ?? 3;
 
   return (
@@ -97,10 +97,11 @@ export default function Dashboard() {
         {data && count === 0 && (
           <EmptyState title="Personne en vue" sub="Ajoute un @ pour commencer le stalke (légal)." />
         )}
-        {data?.profiles.map((p) => {
+        {data?.tracked.map((t) => {
+          const p = t.profile;
           const unseen = data.unseenByProfile[p.id] ?? 0;
           return (
-            <div key={p.id} className="flip-card animate-pop flex items-center gap-3 p-4">
+            <div key={t.id} className="flip-card animate-pop flex items-center gap-3 p-4">
               <Link href={`/profile/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="flip-gradient rounded-full p-[2px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

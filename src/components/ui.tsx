@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ChangeType, ProfileChange } from "@/lib/types";
+import type { ChangeType, UserNotification } from "@/lib/types";
 import { CHANGE_LABELS } from "@/lib/types";
 
 // ---------- helpers ----------
@@ -23,6 +23,9 @@ export const CHANGE_ICONS: Record<ChangeType, { icon: string; bg: string }> = {
   bio_link: { icon: "🔗", bg: "bg-amber-400" },
   username: { icon: "@", bg: "bg-fuchsia-500" },
   privacy: { icon: "🔒", bg: "bg-violet-400" },
+  followers: { icon: "📈", bg: "bg-emerald-400" },
+  following: { icon: "👥", bg: "bg-sky-400" },
+  posts: { icon: "🖼️", bg: "bg-indigo-400" },
 };
 
 // ---------- nav ----------
@@ -42,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           Flip<span className="flip-gradient-text">.</span>
         </Link>
         <span className="rounded-full bg-flip-soft px-3 py-1 text-xs font-semibold text-flip-pink">
-          Mode stalke activé 👀
+          Ne rate aucun update
         </span>
       </header>
       {children}
@@ -69,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 // ---------- change row ----------
 
-export function ChangeRow({ change, showUser = true }: { change: ProfileChange; showUser?: boolean }) {
+export function ChangeRow({ change, showUser = true }: { change: UserNotification; showUser?: boolean }) {
   const meta = CHANGE_ICONS[change.change_type];
   return (
     <div className="animate-pop flex items-start gap-3 px-4 py-3">
@@ -80,7 +83,14 @@ export function ChangeRow({ change, showUser = true }: { change: ProfileChange; 
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-bold">{CHANGE_LABELS[change.change_type]}</p>
+          <p className="flex items-center gap-1.5 text-sm font-bold">
+            {CHANGE_LABELS[change.change_type]}
+            {change.severity === "minor" && (
+              <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400">
+                digest
+              </span>
+            )}
+          </p>
           <span className="shrink-0 text-xs text-gray-400">{timeAgo(change.created_at)}</span>
         </div>
         {showUser && change.username && (

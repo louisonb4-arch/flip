@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
   }
   try {
     const result = await checkAllProfiles();
-    console.log(`[cron] ${result.checked} profils checkés, ${result.changes} changements`);
+    console.log(
+      `[cron] ${result.scanned} profils, ${result.fetched} fetchés, ` +
+        `${result.changes} changements, ${result.notifications} notifications`,
+    );
     return NextResponse.json(result);
   } catch (e) {
     console.error("[cron]", e);
