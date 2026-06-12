@@ -75,26 +75,58 @@ function proxyImage(url: string | null): string | null {
   return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
 }
 
-// Proxy résidentiel/datacenter optionnel (RESIDENTIAL_PROXY_URL) — requis en prod :
-// Instagram bloque souvent les IPs Vercel (429). Sans la variable → fetch direct (dev).
-//
-// Quand un proxy est défini, on utilise le fetch + ProxyAgent du MÊME package undici
-// (le fetch global de Node a un undici interne incompatible avec un dispatcher externe).
-async function igFetch(url: string, headers: Record<string, string>): Promise<Response> {
-  const proxyUrl = process.env.RESIDENTIAL_PROXY_URL;
-  const init = {
-    headers,
-    signal: AbortSignal.timeout(20_000),
-  };
-  if (proxyUrl) {
-    const { fetch: undiciFetch, ProxyAgent } = await import("undici");
-    const res = await undiciFetch(url, {
-      ...init,
-      dispatcher: new ProxyAgent(proxyUrl),
-    });
-    return res as unknown as Response;
+// Pool de proxies : RESIDENTIAL_PROXY_URLS (séparés par virgule) OU RESIDENTIAL_PROXY_URL (1 seul).
+// Instagram bloque les IPs Vercel/datacenter (429) → on tourne entre plusieurs IPs.
+// Sans variable → fetch direct (dev).
+function proxyPool(): string[] {
+  const multi = process.env.RESIDENTIAL_PROXY_URLS;
+  if (multi) return multi.split(",").map((s) => s.trim()).filter(Boolean);
+  const single = process.env.RESIDENTIAL_PROXY_URL;
+  return single ? [single] : [];
+}
+
+// mélange Fisher-Yates → ordre d'essai aléatoire (répartit la charge, survit aux bans d'IP)
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return fetch(url, { ...init, cache: "no-store" });
+  return a;
+}
+
+// fetch via undici (le fetch global de Node a un undici interne incompatible avec un dispatcher).
+// Essaie chaque proxy jusqu'à succès ; un 429/erreur → bascule sur le suivant.
+async function igFetch(url: string, headers: Record<string, string>): Promise<Response> {
+  const init = { headers, signal: AbortSignal.timeout(20_000) };
+  const pool = proxyPool();
+
+  if (pool.length === 0) {
+    return fetch(url, { ...init, cache: "no-store" });
+  }
+
+  const { fetch: undiciFetch, ProxyAgent } = await import("undici");
+  const order = shuffle(pool);
+  let lastErr: unknown = null;
+
+  for (const proxyUrl of order) {
+    try {
+      const res = (await undiciFetch(url, {
+        ...init,
+        dispatcher: new ProxyAgent(proxyUrl),
+      })) as unknown as Response;
+      // 401/403/429 = IP grillée ou challengée → essaie la suivante
+      if (res.status === 401 || res.status === 403 || res.status === 429) {
+        lastErr = new Error(`proxy ${res.status}`);
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      continue; // proxy mort → suivant
+    }
+  }
+  throw lastErr ?? new Error("tous les proxies ont échoué");
 }
 
 export class InstagramWebFetcher implements ProfileFetcher {
