@@ -34,7 +34,7 @@ export default function Landing() {
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
             Ton crush change sa bio&nbsp;?
             <br />
-            <span className="flip-gradient-text">Flip te le dit srx.</span>
+            <span className="flip-gradient-text">Flip te le dit.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-gray-500">
             Suis n&apos;importe quel profil Instagram <strong>public</strong>. Bio, photo, nom,
