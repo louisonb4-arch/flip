@@ -46,6 +46,7 @@ export interface Store {
   subscribersOf(platformProfileId: string): Promise<Subscriber[]>;
   updatePlatformProfile(id: string, p: PublicProfile): Promise<void>;
   touchChecked(id: string): Promise<void>;
+  updateActivityScore(id: string, score: number): Promise<void>;
 
   // snapshots
   addSnapshot(platformProfileId: string, p: PublicProfile): Promise<Snapshot>;
@@ -276,6 +277,12 @@ class DevStore implements Store {
     const db = await this.load();
     const p = this.platform(db, id);
     if (p) p.last_checked_at = new Date().toISOString();
+    await this.save();
+  }
+  async updateActivityScore(id: string, score: number) {
+    const db = await this.load();
+    const p = this.platform(db, id);
+    if (p) p.activity_score = score;
     await this.save();
   }
 
@@ -608,6 +615,10 @@ class SupabaseStore implements Store {
   async touchChecked(id: string) {
     const sb = await this.client();
     await sb.from("platform_profiles").update({ last_checked_at: new Date().toISOString() }).eq("id", id);
+  }
+  async updateActivityScore(id: string, score: number) {
+    const sb = await this.client();
+    await sb.from("platform_profiles").update({ activity_score: score }).eq("id", id);
   }
 
   async addSnapshot(platformProfileId: string, p: PublicProfile) {

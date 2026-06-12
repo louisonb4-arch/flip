@@ -3,7 +3,7 @@ import { getStore } from "@/lib/store";
 import { getSessionUserId } from "@/lib/auth";
 import { getFetcher } from "@/lib/fetcher";
 import { validateUsername, rateLimit } from "@/lib/validate";
-import { PLAN_LIMITS, PLATFORMS, planCap, planTotalProfiles, type Platform } from "@/lib/types";
+import { PLAN_LIMITS, PLATFORMS, planCap, planTotalProfiles, publicProfileView, type Platform } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,9 @@ export async function GET() {
     ]);
     const limits = PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.flip_mini;
     const totalCap = planTotalProfiles(user.plan);
-    return NextResponse.json({ tracked, user, unseenByProfile, limits, totalCap });
+    // strip du score d'activité (interne) avant envoi client
+    const safeTracked = tracked.map((t) => ({ ...t, profile: publicProfileView(t.profile) }));
+    return NextResponse.json({ tracked: safeTracked, user, unseenByProfile, limits, totalCap });
   } catch (e) {
     console.error("[api/profiles GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // crée/récupère le profil GLOBAL + lie le user (fetch partagé)
     const profile = await store.trackProfile(userId, fresh, platform);
-    return NextResponse.json({ profile }, { status: 201 });
+    return NextResponse.json({ profile: publicProfileView(profile) }, { status: 201 });
   } catch (e) {
     console.error("[api/profiles POST]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStore } from "@/lib/store";
 import { getSessionUserId } from "@/lib/auth";
+import { publicProfileView } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       store.listNotifications(userId, { platformProfileId: id, limit: 50 }),
       store.listSnapshots(id, 10),
     ]);
-    return NextResponse.json({ profile, changes, snapshots });
+    return NextResponse.json({ profile: publicProfileView(profile), changes, snapshots });
   } catch (e) {
     console.error("[api/profiles/:id GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

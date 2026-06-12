@@ -59,6 +59,14 @@ export interface PlatformProfile extends PublicProfile {
   platform: Platform;
   last_checked_at: string | null;
   created_at: string;
+  // INTERNE : score d'activité pour le backoff. Jamais exposé au client (strip API).
+  activity_score?: number;
+}
+
+// Retire les champs INTERNES (score d'activité) avant d'envoyer un profil au client.
+export function publicProfileView<T extends PlatformProfile>(p: T): Omit<T, "activity_score"> {
+  const { activity_score: _omit, ...rest } = p;
+  return rest;
 }
 
 // Lien user ↔ profil global.

@@ -8,6 +8,7 @@ import { diffSnapshots, isEnabled } from "./diff";
 import { getStore } from "./store";
 import { getFlipCopy } from "./flip";
 import { sendFlipPush } from "./push";
+import { ACTIVITY_START, nextScore, effectiveIntervalMin } from "./activity";
 import { CHANGE_LABELS, PLAN_LIMITS, type NotificationSettings, type Plan, type PlatformProfile, type ProfileChange } from "./types";
 
 export interface CheckResult {
@@ -71,13 +72,20 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
     await store.updatePlatformProfile(profile.id, fresh);
   }
 
+  // Backoff adaptatif : met à jour le score d'activité du profil.
+  // Un changement → score monte (check plus agressif) ; rien → score baisse.
+  const currentScore = profile.activity_score ?? ACTIVITY_START;
+  const updatedScore = nextScore(currentScore, changeCount, profile.last_checked_at);
+  if (updatedScore !== currentScore) {
+    await store.updateActivityScore(profile.id, updatedScore);
+  }
+
   await store.touchChecked(profile.id);
   return { profile: profile.username, changes: changeCount, notified };
 }
 
-// Le cron tourne souvent mais ne fetch un profil que si son intervalle est écoulé.
-// Intervalle = le PLUS COURT parmi les abonnés (si un premium suit → 6 h, sinon 24 h).
-function dueIntervalMin(plans: Plan[]): number {
+// Plancher du plan : le PLUS COURT intervalle parmi les abonnés (meilleur plan gagne).
+function planFloorMin(plans: Plan[]): number {
   return Math.min(...plans.map((p) => PLAN_LIMITS[p].checkIntervalMin));
 }
 
@@ -95,15 +103,29 @@ export async function checkAllProfiles(): Promise<{
 }> {
   const store = getStore();
   const profiles = await store.allPlatformProfilesForCheck();
+
+  // 1. Construire la file : profils dus, avec leur plancher de plan.
+  const queue: { profile: PlatformProfile; floor: number }[] = [];
+  for (const p of profiles) {
+    const subs = await store.subscribersOf(p.id);
+    if (subs.length === 0) continue; // orphelin
+    const floor = planFloorMin(subs.map((s) => s.plan));
+    const score = p.activity_score ?? ACTIVITY_START;
+    // Fréquence réelle = max(plancher plan, intervalle activité).
+    if (!isDue(p, effectiveIntervalMin(floor, score))) continue;
+    queue.push({ profile: p, floor });
+  }
+
+  // 2. Priorité : meilleur plan (plancher le plus court = Ultra) checké en premier.
+  //    → ressenti "instantané" pour les abonnés premium sans augmenter le volume total.
+  queue.sort((a, b) => a.floor - b.floor);
+
   let fetched = 0;
   let changes = 0;
   let notifications = 0;
 
-  for (const p of profiles) {
+  for (const { profile: p } of queue) {
     try {
-      const subs = await store.subscribersOf(p.id);
-      if (subs.length === 0) continue; // orphelin
-      if (!isDue(p, dueIntervalMin(subs.map((s) => s.plan)))) continue;
       fetched++;
       const r = await checkPlatformProfile(p);
       changes += r.changes;
