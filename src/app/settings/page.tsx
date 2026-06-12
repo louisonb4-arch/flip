@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell, enablePushSubscription } from "@/components/ui";
+import { AppShell, enablePushSubscription, sendTestPush } from "@/components/ui";
 import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/lib/types";
 
 const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
@@ -26,6 +26,7 @@ const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[
 export default function SettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [testMsg, setTestMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -146,6 +147,19 @@ export default function SettingsPage() {
           );
         })}
       </div>
+
+      {/* test push */}
+      <button
+        onClick={async () => {
+          setTestMsg("Envoi…");
+          const msg = await sendTestPush();
+          setTestMsg(msg);
+        }}
+        className="mt-4 w-full rounded-2xl border border-pink-100 bg-flip-soft py-3.5 text-sm font-bold text-flip-pink transition hover:bg-pink-100"
+      >
+        🔔 Envoyer une notification test
+      </button>
+      {testMsg && <p className="mt-2 text-center text-xs font-medium text-gray-500">{testMsg}</p>}
 
       <p className="mt-6 text-center text-xs text-gray-400">
         Flip suit uniquement des infos publiques. Jamais de mot de passe Instagram.

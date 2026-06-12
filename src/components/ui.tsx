@@ -53,9 +53,9 @@ function usePushRegistration() {
   }, []);
 }
 
-// Opt-in explicite : demande la permission + crée l'abonnement push.
-// Appelé quand le user active "Alertes push" dans les réglages.
-export async function enablePushSubscription(): Promise<"ok" | "denied" | "unsupported"> {
+// Opt-in explicite : demande la permission + crée un abonnement push NEUF.
+// force=true → désabonne d'abord pour garantir un endpoint frais (réinstall PWA).
+export async function enablePushSubscription(force = false): Promise<"ok" | "denied" | "unsupported"> {
   if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window))
     return "unsupported";
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return "unsupported";
@@ -65,6 +65,10 @@ export async function enablePushSubscription(): Promise<"ok" | "denied" | "unsup
 
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
+  if (sub && force) {
+    await sub.unsubscribe().catch(() => {});
+    sub = null;
+  }
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -77,6 +81,18 @@ export async function enablePushSubscription(): Promise<"ok" | "denied" | "unsup
     body: JSON.stringify(sub),
   });
   return "ok";
+}
+
+// Force un abonnement neuf puis demande au serveur d'envoyer une notif test.
+export async function sendTestPush(): Promise<string> {
+  const state = await enablePushSubscription(true);
+  if (state === "denied") return "Notifications bloquées. Autorise-les dans Réglages iPhone → Notifications → Flip.";
+  if (state === "unsupported")
+    return "Push non supporté. Ouvre Flip depuis l'icône de l'écran d'accueil (pas Safari).";
+  const res = await fetch("/api/push/test", { method: "POST" });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) return d.error ?? "Échec de l'envoi.";
+  return d.sent > 0 ? "Notif envoyée ! Regarde ton écran." : "Aucun appareil abonné.";
 }
 
 function urlBase64ToUint8Array(base64String: string) {

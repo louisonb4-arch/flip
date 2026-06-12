@@ -762,6 +762,9 @@ class SupabaseStore implements Store {
 
   async savePushSubscription(userId: string, subscription: PushSubscriptionJSON) {
     const sb = await this.client();
+    // un seul appareil par user en beta : on purge les anciens endpoints (évite les orphelins
+    // qu'Apple "accepte" sans jamais livrer) puis on insère le neuf.
+    await sb.from("push_subscriptions").delete().eq("user_id", userId).neq("endpoint", subscription.endpoint);
     await sb
       .from("push_subscriptions")
       .upsert(
