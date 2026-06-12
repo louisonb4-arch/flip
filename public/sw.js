@@ -1,25 +1,40 @@
+// Service worker Flip — web push (iOS 16.4+ PWA, Android, desktop).
+// Bump ce numéro pour forcer iOS à recharger le SW (cache agressif).
+const SW_VERSION = "v2";
+
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
   let data = {};
   try {
-    data = event.data.json();
+    data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "👀 Tu as reçu un Flip", body: event.data.text() };
+    data = { title: "👀 Tu as reçu un Flip", body: event.data ? event.data.text() : "" };
   }
 
-  event.waitUntil(
-    self.registration.showNotification(data.title ?? "👀 Tu as reçu un Flip", {
-      body: data.body ?? "",
-      icon: data.icon ?? "/icon-192.png",
-      badge: "/icon-96.png",
-      data: { url: data.url ?? "/notifications" },
-      vibrate: [100, 50, 100],
-    }),
-  );
+  const title = data.title || "👀 Tu as reçu un Flip";
+  const options = {
+    body: data.body || "Un profil que tu suis a changé.",
+    icon: "/icon-192.png",
+    badge: "/icon-96.png",
+    data: { url: data.url || "/notifications" },
+    tag: "flip-" + Date.now(), // évite la fusion silencieuse des notifs
+  };
+
+  // iOS révoque la permission si une push ne montre PAS de notification → toujours afficher.
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/notifications";
-  event.waitUntil(clients.openWindow(url));
+  const url = (event.notification.data && event.notification.data.url) || "/notifications";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ("focus" in c) return c.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
 });
