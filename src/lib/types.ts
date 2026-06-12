@@ -135,7 +135,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
   },
   premium: {
     checkIntervalMin: 360, // 6 h
-    profilesByPlatform: { instagram: 30 },
+    profilesByPlatform: { instagram: 15 },
     historyFull: true,
   },
   social_plus: {
