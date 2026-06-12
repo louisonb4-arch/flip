@@ -75,13 +75,26 @@ function proxyImage(url: string | null): string | null {
   return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
 }
 
-// Proxy résidentiel optionnel (RESIDENTIAL_PROXY_URL) — requis en prod :
-// Instagram bloque les IPs datacenter (Vercel). Sans la variable → fetch direct (dev).
-async function igFetchOptions(): Promise<RequestInit> {
+// Proxy résidentiel/datacenter optionnel (RESIDENTIAL_PROXY_URL) — requis en prod :
+// Instagram bloque souvent les IPs Vercel (429). Sans la variable → fetch direct (dev).
+//
+// Quand un proxy est défini, on utilise le fetch + ProxyAgent du MÊME package undici
+// (le fetch global de Node a un undici interne incompatible avec un dispatcher externe).
+async function igFetch(url: string, headers: Record<string, string>): Promise<Response> {
   const proxyUrl = process.env.RESIDENTIAL_PROXY_URL;
-  if (!proxyUrl) return {};
-  const { ProxyAgent } = await import("undici");
-  return { dispatcher: new ProxyAgent(proxyUrl) } as RequestInit;
+  const init = {
+    headers,
+    signal: AbortSignal.timeout(20_000),
+  };
+  if (proxyUrl) {
+    const { fetch: undiciFetch, ProxyAgent } = await import("undici");
+    const res = await undiciFetch(url, {
+      ...init,
+      dispatcher: new ProxyAgent(proxyUrl),
+    });
+    return res as unknown as Response;
+  }
+  return fetch(url, { ...init, cache: "no-store" });
 }
 
 export class InstagramWebFetcher implements ProfileFetcher {
@@ -89,23 +102,17 @@ export class InstagramWebFetcher implements ProfileFetcher {
 
   async fetchProfile(username: string): Promise<PublicProfile | null> {
     fetchCounter[username] = (fetchCounter[username] ?? 0) + 1;
-    const proxyOpts = await igFetchOptions();
-    const res = await fetch(
+    const res = await igFetch(
       `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
       {
-        ...proxyOpts,
-        headers: {
-          "x-ig-app-id": IG_APP_ID,
-          "User-Agent": IG_UA,
-          Accept: "*/*",
-          "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
-          Referer: `https://www.instagram.com/${encodeURIComponent(username)}/`,
-          "Sec-Fetch-Site": "same-origin",
-          "Sec-Fetch-Mode": "cors",
-          "Sec-Fetch-Dest": "empty",
-        },
-        signal: AbortSignal.timeout(20_000),
-        cache: "no-store",
+        "x-ig-app-id": IG_APP_ID,
+        "User-Agent": IG_UA,
+        Accept: "*/*",
+        "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+        Referer: `https://www.instagram.com/${encodeURIComponent(username)}/`,
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
       },
     );
 
