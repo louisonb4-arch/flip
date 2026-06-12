@@ -1,0 +1,18 @@
+# Cron horaire — Vercel Hobby limite à 1 cron/jour, GitHub Actions prend le relais.
+# Secret requis : CRON_SECRET (Settings → Secrets and variables → Actions).
+name: Flip hourly check
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/check
+        run: |
+          curl -sf -X GET "https://flip-louis-projects-a1487864.vercel.app/api/cron/check" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 280

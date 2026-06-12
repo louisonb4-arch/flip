@@ -75,14 +75,25 @@ function proxyImage(url: string | null): string | null {
   return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
 }
 
+// Proxy résidentiel optionnel (RESIDENTIAL_PROXY_URL) — requis en prod :
+// Instagram bloque les IPs datacenter (Vercel). Sans la variable → fetch direct (dev).
+async function igFetchOptions(): Promise<RequestInit> {
+  const proxyUrl = process.env.RESIDENTIAL_PROXY_URL;
+  if (!proxyUrl) return {};
+  const { ProxyAgent } = await import("undici");
+  return { dispatcher: new ProxyAgent(proxyUrl) } as RequestInit;
+}
+
 export class InstagramWebFetcher implements ProfileFetcher {
   name = "instagram_web";
 
   async fetchProfile(username: string): Promise<PublicProfile | null> {
     fetchCounter[username] = (fetchCounter[username] ?? 0) + 1;
+    const proxyOpts = await igFetchOptions();
     const res = await fetch(
       `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
       {
+        ...proxyOpts,
         headers: {
           "x-ig-app-id": IG_APP_ID,
           "User-Agent": IG_UA,
@@ -93,7 +104,7 @@ export class InstagramWebFetcher implements ProfileFetcher {
           "Sec-Fetch-Mode": "cors",
           "Sec-Fetch-Dest": "empty",
         },
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(20_000),
         cache: "no-store",
       },
     );
