@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flip
 
-## Getting Started
+> Ton crush change sa bio ? Flip te le dit srx.
 
-First, run the development server:
+Suivi de profils Instagram **publics** : bio, photo, nom, lien, privé/public. Notification dès qu'un profil change. Historique AVANT / APRÈS. Freemium (3 profils gratuits).
+
+**Disclaimer** : Flip ne suit que des informations publiques observables. Aucun identifiant Instagram n'est demandé ni stocké.
+
+## Stack
+
+- Next.js 16 (App Router) + Tailwind v4
+- Supabase (Auth + Postgres + RLS) — migrations dans `supabase/migrations/`
+- Cron Vercel (`vercel.json`, toutes les 15 min)
+- `ProfileFetcher` modulaire : mock en dev, provider externe en prod
+
+## Dev
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sans clés Supabase → **DevStore** local (`.data/dev-db.json`), user démo, fetcher mock (les profils mock "changent" toutes les ~2 min → la détection est testable en live).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Créer un projet Supabase, exécuter `supabase/migrations/001_init.sql`.
+2. Copier `.env.example` → `.env.local`, remplir `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
+3. Brancher un provider de données publiques : `PROFILE_FETCHER=external` + `PROFILE_PROVIDER_URL/KEY`.
+4. Déployer sur Vercel — le cron `/api/cron/check` tourne automatiquement.
+5. Stripe : webhooks → `subscriptions` + `users.plan` (architecture prête, à brancher).
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+| Méthode | Route | Rôle |
+|---|---|---|
+| GET/POST | `/api/profiles` | lister / ajouter (validation + rate limit + limite plan) |
+| GET/DELETE | `/api/profiles/:id` | détail / supprimer |
+| POST | `/api/profiles/:id/check` | check manuel |
+| GET/POST | `/api/changes` | historique (filtre `?type=`) / marquer vu |
+| GET/PATCH | `/api/settings` | préférences notifs + plan |
+| GET | `/api/cron/check` | check global (protégé `CRON_SECRET`) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Freemium
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| | Gratuit | Premium |
+|---|---|---|
+| Profils | 3 | 25 |
+| Fréquence checks | 60 min | 15 min |
+| Historique | 20 derniers | complet |

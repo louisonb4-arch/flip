@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-flip-pink: #ff2d78;
+  --color-flip-coral: #ff5e62;
+  --color-flip-orange: #ff9a3d;
+  --color-flip-ink: #14121f;
+  --color-flip-soft: #fff1f5;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: var(--color-flip-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+
+.flip-gradient {
+  background: linear-gradient(120deg, #ff2d78, #ff5e62 50%, #ff9a3d);
+}
+.flip-gradient-text {
+  background: linear-gradient(120deg, #ff2d78, #ff5e62 50%, #ff9a3d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.flip-card {
+  background: #fff;
+  border: 1px solid #f1eef4;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 16px rgba(255, 45, 120, 0.06);
+}
+.flip-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.18;
+  pointer-events: none;
+}
+@keyframes flip-pop {
+  0% { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop { animation: flip-pop 0.25s ease-out both; }

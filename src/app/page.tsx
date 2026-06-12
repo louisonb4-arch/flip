@@ -1,65 +1,104 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+const FEATURES = [
+  { icon: "Aa", title: "Bio modifiée", desc: "Nouvelle bio ? T'es au courant en premier." },
+  { icon: "📷", title: "Photo changée", desc: "Nouvelle pp détectée direct." },
+  { icon: "👤", title: "Nom affiché", desc: "Changement de nom ? Vu." },
+  { icon: "🔗", title: "Lien en bio", desc: "Nouveau linktree, nouveau drop. Srx t'es au courant." },
+];
+
+export default function Landing() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="relative overflow-hidden">
+      <div className="flip-blob left-[-10%] top-[10%] h-72 w-72 bg-flip-pink" />
+      <div className="flip-blob right-[-10%] top-[40%] h-80 w-80 bg-flip-orange" />
+
+      <div className="mx-auto max-w-3xl px-6 pb-20 pt-10">
+        <header className="flex items-center justify-between">
+          <span className="text-2xl font-extrabold tracking-tight">
+            Flip<span className="flip-gradient-text">.</span>
+          </span>
+          <Link
+            href="/dashboard"
+            className="flip-gradient rounded-full px-5 py-2 text-sm font-bold text-white shadow-lg shadow-pink-200 transition hover:scale-105"
+          >
+            Ouvrir l&apos;app
+          </Link>
+        </header>
+
+        {/* hero */}
+        <section className="mt-20 text-center">
+          <p className="mx-auto mb-4 w-fit rounded-full bg-flip-soft px-4 py-1.5 text-sm font-semibold text-flip-pink">
+            ⚡ Ne rate aucun update
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+            Ton crush change sa bio&nbsp;?
+            <br />
+            <span className="flip-gradient-text">Flip te le dit srx.</span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-gray-500">
+            Suis n&apos;importe quel profil Instagram <strong>public</strong>. Bio, photo, nom,
+            lien — dès que ça bouge, tu reçois une alerte.
+          </p>
+          <Link
+            href="/dashboard"
+            className="flip-gradient mt-8 inline-block rounded-full px-8 py-4 text-lg font-bold text-white shadow-xl shadow-pink-200 transition hover:scale-105"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            Ajouter un profil →
+          </Link>
+          <p className="mt-4 text-xs text-gray-400">
+            100% infos publiques. Aucun mot de passe Instagram demandé, jamais.
+          </p>
+        </section>
+
+        {/* features */}
+        <section className="mt-24 grid gap-4 sm:grid-cols-2">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="flip-card p-6">
+              <span className="flip-gradient flex h-11 w-11 items-center justify-center rounded-full text-lg font-bold text-white">
+                {f.icon}
+              </span>
+              <h3 className="mt-4 font-bold">{f.title}</h3>
+              <p className="mt-1 text-sm text-gray-500">{f.desc}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* pricing */}
+        <section className="mt-24">
+          <h2 className="text-center text-3xl font-extrabold">Pricing simple.</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="flip-card p-8">
+              <h3 className="font-bold text-gray-500">Gratuit</h3>
+              <p className="mt-2 text-4xl font-extrabold">0€</p>
+              <ul className="mt-6 space-y-2 text-sm text-gray-500">
+                <li>✓ 3 profils suivis</li>
+                <li>✓ Check toutes les heures</li>
+                <li>✓ 20 derniers changements</li>
+              </ul>
+            </div>
+            <div className="flip-card relative border-2 border-flip-pink p-8">
+              <span className="flip-gradient absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-white">
+                POPULAIRE
+              </span>
+              <h3 className="font-bold text-flip-pink">Premium</h3>
+              <p className="mt-2 text-4xl font-extrabold">
+                4,99€<span className="text-base font-medium text-gray-400">/mois</span>
+              </p>
+              <ul className="mt-6 space-y-2 text-sm text-gray-500">
+                <li>✓ 25 profils suivis</li>
+                <li>✓ Checks toutes les 15 min</li>
+                <li>✓ Historique complet</li>
+                <li>✓ Alertes prioritaires</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <footer className="mt-20 text-center text-xs text-gray-400">
+          Flip suit uniquement des informations publiques observables. Pas affilié à Instagram.
+        </footer>
+      </div>
+    </main>
   );
 }
