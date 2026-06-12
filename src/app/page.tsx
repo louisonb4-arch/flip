@@ -1,10 +1,16 @@
 import Link from "next/link";
 
 const FEATURES = [
-  { icon: "Aa", title: "Bio modifiée", desc: "Nouvelle bio ? T'es au courant en premier." },
-  { icon: "📷", title: "Photo changée", desc: "Nouvelle pp détectée direct." },
-  { icon: "👤", title: "Nom affiché", desc: "Changement de nom ? Vu." },
-  { icon: "🔗", title: "Lien en bio", desc: "Nouveau linktree, nouveau drop. Srx t'es au courant." },
+  { icon: "🔔", title: "Alertes", sub: "instantanées" },
+  { icon: "🕐", title: "Historique", sub: "complet" },
+  { icon: "📈", title: "Suivi avancé", sub: "abonnés, posts" },
+  { icon: "🛡️", title: "100% privé", sub: "et sécurisé" },
+];
+
+const STEPS = [
+  { n: 1, icon: "➕", title: "Ajoute un profil", sub: "en 2 secondes" },
+  { n: 2, icon: "⚡", title: "On surveille", sub: "les changements" },
+  { n: 3, icon: "📲", title: "Tu reçois un Flip", sub: "dès que ça bouge" },
 ];
 
 export default function Landing() {
@@ -51,17 +57,68 @@ export default function Landing() {
           </p>
         </section>
 
-        {/* features */}
-        <section className="mt-24 grid gap-4 sm:grid-cols-2">
+        {/* features — rangée compacte */}
+        <section className="mt-14 grid grid-cols-4 gap-3 text-center">
           {FEATURES.map((f) => (
-            <div key={f.title} className="flip-card p-6">
-              <span className="flip-gradient flex h-11 w-11 items-center justify-center rounded-full text-lg font-bold text-white">
+            <div key={f.title} className="flex flex-col items-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-flip-soft text-xl">
                 {f.icon}
               </span>
-              <h3 className="mt-4 font-bold">{f.title}</h3>
-              <p className="mt-1 text-sm text-gray-500">{f.desc}</p>
+              <p className="mt-2 text-xs font-bold sm:text-sm">{f.title}</p>
+              <p className="text-[11px] text-gray-400 sm:text-xs">{f.sub}</p>
             </div>
           ))}
+        </section>
+
+        {/* comment ça marche */}
+        <section className="mt-20">
+          <h2 className="text-center text-2xl font-extrabold sm:text-3xl">Comment ça marche ?</h2>
+          <div className="mt-8 flex items-start justify-between gap-2">
+            {STEPS.map((s, i) => (
+              <div key={s.n} className="flex flex-1 items-start">
+                <div className="flex flex-1 flex-col items-center text-center">
+                  <div className="relative">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-flip-soft text-2xl">
+                      {s.icon}
+                    </span>
+                    <span className="flip-gradient absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white shadow">
+                      {s.n}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-bold">{s.title}</p>
+                  <p className="text-xs text-gray-400">{s.sub}</p>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className="mt-7 hidden h-px flex-1 border-t-2 border-dashed border-pink-200 sm:block" />
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* avis */}
+        <section className="mt-16">
+          <div className="flip-card mx-auto flex max-w-md items-center gap-4 p-5">
+            <div className="flex shrink-0 -space-x-3">
+              {["a", "b", "c"].map((s) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={s}
+                  src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${s}`}
+                  alt=""
+                  className="h-10 w-10 rounded-full border-2 border-white bg-flip-soft"
+                />
+              ))}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-amber-400">
+                ★★★★★ <span className="text-flip-ink">4,9/5</span>
+              </p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                « Simple, efficace, addictif. Je ne rate plus aucun changement. »
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* pricing */}
