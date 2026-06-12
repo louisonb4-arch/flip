@@ -4,7 +4,7 @@
 import { getFetcher } from "./fetcher";
 import { diffSnapshots, shouldNotify } from "./diff";
 import { getStore } from "./store";
-import { CHANGE_LABELS, type ProfileChange, type TrackedProfile } from "./types";
+import { CHANGE_LABELS, PLAN_LIMITS, type ProfileChange, type TrackedProfile } from "./types";
 
 export async function checkProfile(profile: TrackedProfile): Promise<ProfileChange[]> {
   const store = getStore();
@@ -49,18 +49,41 @@ export async function checkProfile(profile: TrackedProfile): Promise<ProfileChan
   return created;
 }
 
-export async function checkAllProfiles(): Promise<{ checked: number; changes: number }> {
+// Le cron tourne souvent (ex. toutes les heures) mais ne fetch un profil
+// que si son intervalle de plan est écoulé → maîtrise du coût data.
+function isDue(profile: TrackedProfile, intervalMin: number): boolean {
+  if (!profile.last_checked_at) return true;
+  const elapsedMin = (Date.now() - new Date(profile.last_checked_at).getTime()) / 60_000;
+  return elapsedMin >= intervalMin;
+}
+
+export async function checkAllProfiles(): Promise<{
+  scanned: number;
+  checked: number;
+  changes: number;
+}> {
   const store = getStore();
   const profiles = await store.allProfilesForCheck();
+  let checked = 0;
   let changes = 0;
+  const planCache = new Map<string, number>();
+
   for (const p of profiles) {
     try {
+      let intervalMin = planCache.get(p.user_id);
+      if (intervalMin === undefined) {
+        const user = await store.getUser(p.user_id);
+        intervalMin = PLAN_LIMITS[user.plan]?.checkIntervalMin ?? PLAN_LIMITS.starter.checkIntervalMin;
+        planCache.set(p.user_id, intervalMin);
+      }
+      if (!isDue(p, intervalMin)) continue;
+      checked++;
       changes += (await checkProfile(p)).length;
     } catch (e) {
       console.error(`[cron] check échoué @${p.username}:`, e);
     }
   }
-  return { checked: profiles.length, changes };
+  return { scanned: profiles.length, checked, changes };
 }
 
 // Notification : email/push branchables plus tard (Resend / web push).

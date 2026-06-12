@@ -64,8 +64,8 @@ export default function SettingsPage() {
         </div>
         <p className="mt-3 text-xs text-gray-400">
           {premium
-            ? "25 profils · checks 15 min · historique complet."
-            : "Starter 1,99€/mois : 3 profils · checks 60 min · 20 derniers changements."}
+            ? "25 profils · checks toutes les 6 h · historique complet."
+            : "Starter 1,99€/mois : 3 profils · check 1×/jour · 20 derniers changements."}
           {" "}(Paiement Stripe branché plus tard — toggle démo.)
         </p>
       </div>

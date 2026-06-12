@@ -10,7 +10,7 @@ Suivi de profils Instagram **publics** : bio, photo, nom, lien, privé/public. N
 
 - Next.js 16 (App Router) + Tailwind v4
 - Supabase (Auth + Postgres + RLS) — migrations dans `supabase/migrations/`
-- Cron Vercel (`vercel.json`, toutes les 15 min)
+- Cron Vercel (`vercel.json`, toutes les heures ; chaque profil fetché seulement si son intervalle de plan est écoulé → coût data maîtrisé)
 - `ProfileFetcher` modulaire : mock en dev, provider externe en prod
 
 ## Dev
@@ -46,5 +46,5 @@ Sans clés Supabase → **DevStore** local (`.data/dev-db.json`), user démo, fe
 | | Starter 1,99€/mois | Premium 4,99€/mois |
 |---|---|---|
 | Profils | 3 | 25 |
-| Fréquence checks | 60 min | 15 min |
+| Fréquence checks | 1×/jour | toutes les 6 h |
 | Historique | 20 derniers | complet |

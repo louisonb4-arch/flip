@@ -65,8 +65,8 @@ export interface User {
 }
 
 export const PLAN_LIMITS: Record<Plan, { maxProfiles: number; checkIntervalMin: number }> = {
-  starter: { maxProfiles: 3, checkIntervalMin: 60 },
-  premium: { maxProfiles: 25, checkIntervalMin: 15 },
+  starter: { maxProfiles: 3, checkIntervalMin: 1440 }, // 24 h
+  premium: { maxProfiles: 25, checkIntervalMin: 360 }, // 6 h
 };
 
 export const CHANGE_LABELS: Record<ChangeType, string> = {

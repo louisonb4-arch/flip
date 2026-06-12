@@ -75,7 +75,7 @@ export default function Landing() {
               </p>
               <ul className="mt-6 space-y-2 text-sm text-gray-500">
                 <li>✓ 3 profils suivis</li>
-                <li>✓ Check toutes les heures</li>
+                <li>✓ Check 1×/jour</li>
                 <li>✓ 20 derniers changements</li>
               </ul>
             </div>
@@ -89,7 +89,7 @@ export default function Landing() {
               </p>
               <ul className="mt-6 space-y-2 text-sm text-gray-500">
                 <li>✓ 25 profils suivis</li>
-                <li>✓ Checks toutes les 15 min</li>
+                <li>✓ Checks toutes les 6 h</li>
                 <li>✓ Historique complet</li>
                 <li>✓ Alertes prioritaires</li>
               </ul>
