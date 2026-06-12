@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
 
     // toggle plan (dev/demo — en prod : Stripe webhook)
-    if (body.plan === "starter" || body.plan === "premium") {
+    if (body.plan === "starter" || body.plan === "premium" || body.plan === "social_plus") {
       await store.setPlan(userId, body.plan);
     }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStore, getCurrentUserId } from "@/lib/store";
+import { PLAN_LIMITS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +11,11 @@ export async function GET(req: NextRequest) {
     const userId = getCurrentUserId();
     const user = await store.getUser(userId);
     const type = req.nextUrl.searchParams.get("type") ?? undefined;
-    // historique limité à 20 en starter, complet en premium
-    const limit = user.plan === "premium" ? 500 : 20;
+    // historique complet selon le plan, sinon 20 derniers
+    const full = PLAN_LIMITS[user.plan].historyFull;
+    const limit = full ? 500 : 20;
     const changes = await store.listNotifications(userId, { type, limit });
-    return NextResponse.json({ changes, plan: user.plan, limited: user.plan === "starter" });
+    return NextResponse.json({ changes, plan: user.plan, limited: !full });
   } catch (e) {
     console.error("[api/changes GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

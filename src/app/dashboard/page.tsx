@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell, EmptyState, timeAgo } from "@/components/ui";
-import type { User, UserTrackedProfile } from "@/lib/types";
+import { PLAN_LABELS, type User, type UserTrackedProfile } from "@/lib/types";
 
 interface Data {
   tracked: UserTrackedProfile[];
   user: User;
   unseenByProfile: Record<string, number>;
-  limits: { maxProfiles: number };
+  totalCap: number;
 }
 
 export default function Dashboard() {
@@ -54,13 +54,13 @@ export default function Dashboard() {
   }
 
   const count = data?.tracked.length ?? 0;
-  const max = data?.limits.maxProfiles ?? 3;
+  const max = data?.totalCap ?? 3;
 
   return (
     <AppShell>
       <h1 className="text-3xl font-extrabold">Profils suivis</h1>
       <p className="mt-1 text-sm text-gray-400">
-        {data ? `${count}/${max} profils · plan ${data.user.plan}` : "Chargement…"}
+        {data ? `${count}/${max} profils · plan ${PLAN_LABELS[data.user.plan]}` : "Chargement…"}
       </p>
 
       {/* add form */}

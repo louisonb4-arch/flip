@@ -6,7 +6,7 @@
 import { getFetcher } from "./fetcher";
 import { diffSnapshots, isEnabled } from "./diff";
 import { getStore } from "./store";
-import { CHANGE_LABELS, PLAN_LIMITS, type NotificationSettings, type PlatformProfile, type ProfileChange } from "./types";
+import { CHANGE_LABELS, PLAN_LIMITS, type NotificationSettings, type Plan, type PlatformProfile, type ProfileChange } from "./types";
 
 export interface CheckResult {
   profile: string;
@@ -16,7 +16,7 @@ export interface CheckResult {
 
 export async function checkPlatformProfile(profile: PlatformProfile): Promise<CheckResult> {
   const store = getStore();
-  const fetcher = getFetcher();
+  const fetcher = getFetcher(profile.platform);
 
   const fresh = await fetcher.fetchProfile(profile.username); // 1 SEUL fetch
   if (!fresh) {
@@ -65,7 +65,7 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
 
 // Le cron tourne souvent mais ne fetch un profil que si son intervalle est écoulé.
 // Intervalle = le PLUS COURT parmi les abonnés (si un premium suit → 6 h, sinon 24 h).
-function dueIntervalMin(plans: ("starter" | "premium")[]): number {
+function dueIntervalMin(plans: Plan[]): number {
   return Math.min(...plans.map((p) => PLAN_LIMITS[p].checkIntervalMin));
 }
 

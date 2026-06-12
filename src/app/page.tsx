@@ -66,39 +66,116 @@ export default function Landing() {
 
         {/* pricing */}
         <section className="mt-24">
-          <h2 className="text-center text-3xl font-extrabold">Pricing simple.</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="flip-card p-8">
+          <h2 className="text-center text-3xl font-extrabold">Choisis ton plan.</h2>
+          <p className="mx-auto mt-2 max-w-md text-center text-sm text-gray-400">
+            Des limites claires, sans jargon. Tu sais exactement ce que tu suis.
+          </p>
+
+          <div className="mt-10 grid items-start gap-5 lg:grid-cols-3">
+            {/* Starter */}
+            <div className="flip-card flex flex-col p-7">
               <h3 className="font-bold text-gray-500">Starter</h3>
-              <p className="mt-2 text-4xl font-extrabold">
+              <p className="mt-1 text-xs text-gray-400">Pour découvrir Flip.</p>
+              <p className="mt-4 text-4xl font-extrabold">
                 1,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
-              <ul className="mt-6 space-y-2 text-sm text-gray-500">
-                <li>✓ 3 profils suivis</li>
-                <li>✓ Check 1×/jour</li>
-                <li>✓ 20 derniers changements</li>
+              <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
+                <li>📸 <strong>3 profils</strong> Instagram</li>
+                <li>🕐 Check <strong>1×/jour</strong></li>
+                <li>📋 20 derniers changements</li>
+                <li>🔔 Alertes de base</li>
               </ul>
+              <Link
+                href="/dashboard"
+                className="mt-7 rounded-full border border-gray-200 py-3 text-center text-sm font-bold text-gray-600 transition hover:border-flip-pink hover:text-flip-pink"
+              >
+                Commencer
+              </Link>
             </div>
-            <div className="flip-card relative border-2 border-flip-pink p-8">
-              <span className="flip-gradient absolute -top-3 right-6 rounded-full px-3 py-1 text-xs font-bold text-white">
-                POPULAIRE
+
+            {/* Premium — mis en avant */}
+            <div className="flip-card relative flex flex-col border-2 border-flip-pink p-7 shadow-xl shadow-pink-100 lg:-mt-4 lg:scale-[1.04]">
+              <span className="flip-gradient absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-1 text-xs font-bold text-white shadow">
+                ⭐ POPULAIRE
               </span>
               <h3 className="font-bold text-flip-pink">Premium</h3>
-              <p className="mt-2 text-4xl font-extrabold">
+              <p className="mt-1 text-xs text-gray-400">Le plan principal.</p>
+              <p className="mt-4 text-4xl font-extrabold">
                 4,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
-              <ul className="mt-6 space-y-2 text-sm text-gray-500">
-                <li>✓ 25 profils suivis</li>
-                <li>✓ Checks toutes les 6 h</li>
-                <li>✓ Historique complet</li>
-                <li>✓ Alertes prioritaires</li>
+              <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
+                <li>📸 <strong>30 profils</strong> Instagram</li>
+                <li>⚡ Checks <strong>toutes les 6 h</strong></li>
+                <li>📚 Historique complet</li>
+                <li>🚀 Alertes prioritaires</li>
+                <li>🔀 Comparaison Avant / Après</li>
+                <li>⏱️ Notifications instantanées</li>
               </ul>
+              <Link
+                href="/dashboard"
+                className="flip-gradient mt-7 rounded-full py-3 text-center text-sm font-bold text-white shadow-lg shadow-pink-200 transition hover:scale-105"
+              >
+                Passer Premium
+              </Link>
             </div>
+
+            {/* Social+ — multi-plateformes */}
+            <div className="flip-card relative flex flex-col border border-indigo-100 p-7">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-4 py-1 text-xs font-bold text-white shadow">
+                ✨ Multi-plateformes
+              </span>
+              <h3 className="font-bold text-indigo-500">Social+</h3>
+              <p className="mt-1 text-xs text-gray-400">Le plus avancé.</p>
+              <p className="mt-4 text-4xl font-extrabold">
+                9,99€<span className="text-base font-medium text-gray-400">/mois</span>
+              </p>
+              <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
+                <li>📸 <strong>30 profils</strong> Instagram</li>
+                <li className="font-semibold text-indigo-600">🎵 <strong>+ 10 profils</strong> TikTok</li>
+                <li>⚡ Checks <strong>toutes les 2 h</strong></li>
+                <li>📚 Historique complet</li>
+                <li>📬 Digest hebdomadaire</li>
+                <li>📈 Suivi avancé followers / posts</li>
+                <li>🆕 Accès anticipé aux nouvelles plateformes</li>
+              </ul>
+              <Link
+                href="/dashboard"
+                className="mt-7 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 py-3 text-center text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:scale-105"
+              >
+                Passer Social+
+              </Link>
+            </div>
+          </div>
+
+          {/* roadmap plateformes */}
+          <div className="mt-12 text-center">
+            <p className="text-sm font-semibold text-gray-500">Bientôt sur Flip</p>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {[
+                { e: "𝕏", l: "X / Twitter" },
+                { e: "🎮", l: "Twitch" },
+                { e: "▶️", l: "YouTube" },
+                { e: "🐙", l: "GitHub" },
+                { e: "💼", l: "LinkedIn" },
+              ].map((p) => (
+                <span
+                  key={p.l}
+                  className="rounded-full border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-400"
+                >
+                  {p.e} {p.l}
+                </span>
+              ))}
+            </div>
+            <p className="mx-auto mt-4 max-w-md text-xs text-gray-400">
+              Flip surveille les changements publics sur internet. Instagram n&apos;est que la première
+              plateforme.
+            </p>
           </div>
         </section>
 
         <footer className="mt-20 text-center text-xs text-gray-400">
-          Flip suit uniquement des informations publiques observables. Pas affilié à Instagram.
+          Flip suit uniquement des informations publiques observables. Pas affilié aux plateformes
+          surveillées.
         </footer>
       </div>
     </main>

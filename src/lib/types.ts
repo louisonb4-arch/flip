@@ -1,4 +1,28 @@
-export type Plan = "starter" | "premium";
+export type Plan = "starter" | "premium" | "social_plus";
+
+// Plateformes surveillées. Instagram en premier ; le reste arrive progressivement.
+// Flip n'est pas une app Instagram : « Flip surveille les changements publics sur internet. »
+export type Platform =
+  | "instagram"
+  | "tiktok"
+  | "x"
+  | "twitch"
+  | "youtube"
+  | "github"
+  | "linkedin";
+
+export const PLATFORMS: Record<
+  Platform,
+  { label: string; emoji: string; enabled: boolean }
+> = {
+  instagram: { label: "Instagram", emoji: "📸", enabled: true },
+  tiktok: { label: "TikTok", emoji: "🎵", enabled: true },
+  x: { label: "X / Twitter", emoji: "𝕏", enabled: false },
+  twitch: { label: "Twitch", emoji: "🎮", enabled: false },
+  youtube: { label: "YouTube", emoji: "▶️", enabled: false },
+  github: { label: "GitHub", emoji: "🐙", enabled: false },
+  linkedin: { label: "LinkedIn", emoji: "💼", enabled: false },
+};
 
 // Types de changement détectables sur un profil.
 export type ChangeType =
@@ -32,7 +56,7 @@ export interface PublicProfile {
 // Profil GLOBAL, partagé entre tous les users qui le suivent. Fetché 1× pour tous.
 export interface PlatformProfile extends PublicProfile {
   id: string;
-  platform: "instagram";
+  platform: Platform;
   last_checked_at: string | null;
   created_at: string;
 }
@@ -96,10 +120,46 @@ export interface User {
   plan: Plan;
 }
 
-export const PLAN_LIMITS: Record<Plan, { maxProfiles: number; checkIntervalMin: number }> = {
-  starter: { maxProfiles: 3, checkIntervalMin: 1440 }, // 24 h
-  premium: { maxProfiles: 25, checkIntervalMin: 360 }, // 6 h
+export interface PlanLimit {
+  checkIntervalMin: number;
+  // Quota de profils PAR plateforme. Une plateforme absente = non disponible sur ce plan.
+  profilesByPlatform: Partial<Record<Platform, number>>;
+  historyFull: boolean;
+}
+
+export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
+  starter: {
+    checkIntervalMin: 1440, // 24 h
+    profilesByPlatform: { instagram: 3 },
+    historyFull: false,
+  },
+  premium: {
+    checkIntervalMin: 360, // 6 h
+    profilesByPlatform: { instagram: 30 },
+    historyFull: true,
+  },
+  social_plus: {
+    checkIntervalMin: 120, // 2 h
+    profilesByPlatform: { instagram: 30, tiktok: 10 },
+    historyFull: true,
+  },
 };
+
+export const PLAN_LABELS: Record<Plan, string> = {
+  starter: "Starter",
+  premium: "Premium",
+  social_plus: "Social+",
+};
+
+// Quota de profils pour un plan sur une plateforme donnée (0 = non disponible).
+export function planCap(plan: Plan, platform: Platform): number {
+  return PLAN_LIMITS[plan].profilesByPlatform[platform] ?? 0;
+}
+
+// Quota total tous plateformes confondues (affichage simple).
+export function planTotalProfiles(plan: Plan): number {
+  return Object.values(PLAN_LIMITS[plan].profilesByPlatform).reduce((a, b) => a + b, 0);
+}
 
 export const CHANGE_LABELS: Record<ChangeType, string> = {
   bio: "La bio a changé",

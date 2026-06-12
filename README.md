@@ -1,10 +1,12 @@
 # Flip
 
-> Ton crush change sa bio ? Flip te le dit srx.
+> Flip surveille les changements publics sur internet.
 
-Suivi de profils Instagram **publics** : bio, photo, nom, lien, privé/public. Notification dès qu'un profil change. Historique AVANT / APRÈS. Deux plans payants : Starter 1,99€/mois, Premium 4,99€/mois.
+Suivi de profils **publics** : bio, photo, nom, lien, privé/public, abonnés, posts. Notification dès qu'un profil change. Historique AVANT / APRÈS + digest hebdo. Instagram est la première plateforme ; l'architecture est multi-plateformes (TikTok, X, Twitch, YouTube, GitHub, LinkedIn à venir).
 
-**Disclaimer** : Flip ne suit que des informations publiques observables. Aucun identifiant Instagram n'est demandé ni stocké.
+Trois plans : Starter 1,99€, Premium 4,99€, Social+ 9,99€ (multi-plateformes).
+
+**Disclaimer** : Flip ne suit que des informations publiques observables. Aucun identifiant des plateformes n'est demandé ni stocké.
 
 ## Stack
 
@@ -43,8 +45,12 @@ Sans clés Supabase → **DevStore** local (`.data/dev-db.json`), user démo, fe
 
 ## Plans
 
-| | Starter 1,99€/mois | Premium 4,99€/mois |
-|---|---|---|
-| Profils | 3 | 25 |
-| Fréquence checks | 1×/jour | toutes les 6 h |
-| Historique | 20 derniers | complet |
+| | Starter 1,99€ | Premium 4,99€ | Social+ 9,99€ |
+|---|---|---|---|
+| Instagram | 3 profils | 30 profils | 30 profils |
+| TikTok | — | — | 10 profils |
+| Fréquence checks | 1×/jour | toutes les 6 h | toutes les 2 h |
+| Historique | 20 derniers | complet | complet |
+| Digest hebdo | — | — | ✓ |
+
+Quotas définis par plateforme dans `PLAN_LIMITS` ([types.ts](src/lib/types.ts)). Ajouter une plateforme = ajouter une entrée dans `PLATFORMS` (`enabled`) + un fetcher.

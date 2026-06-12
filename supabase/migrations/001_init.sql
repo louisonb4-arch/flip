@@ -12,7 +12,7 @@
 create table public.users (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
-  plan text not null default 'starter' check (plan in ('starter', 'premium')),
+  plan text not null default 'starter' check (plan in ('starter', 'premium', 'social_plus')),
   created_at timestamptz not null default now()
 );
 

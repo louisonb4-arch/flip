@@ -11,6 +11,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import type {
   NotificationSettings,
+  Platform,
   PlatformProfile,
   ProfileChange,
   PublicProfile,
@@ -37,7 +38,7 @@ export interface Store {
   // profils suivis (vue user)
   listTracked(userId: string): Promise<UserTrackedProfile[]>;
   getTrackedProfile(userId: string, platformProfileId: string): Promise<PlatformProfile | null>;
-  trackProfile(userId: string, p: PublicProfile): Promise<PlatformProfile>;
+  trackProfile(userId: string, p: PublicProfile, platform: Platform): Promise<PlatformProfile>;
   untrack(userId: string, platformProfileId: string): Promise<void>;
 
   // profils globaux (cron / partagé)
@@ -180,17 +181,17 @@ class DevStore implements Store {
     if (!link) return null;
     return this.platform(db, platformProfileId);
   }
-  async trackProfile(userId: string, p: PublicProfile): Promise<PlatformProfile> {
+  async trackProfile(userId: string, p: PublicProfile, platform: Platform): Promise<PlatformProfile> {
     const db = await this.load();
     // profil global existant ? sinon créer (et baseline snapshot)
     let pp = db.platformProfiles.find(
-      (x) => x.platform === "instagram" && x.username === p.username,
+      (x) => x.platform === platform && x.username === p.username,
     );
     if (!pp) {
       pp = {
         ...p,
         id: randomUUID(),
-        platform: "instagram",
+        platform,
         last_checked_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
       };
@@ -442,20 +443,20 @@ class SupabaseStore implements Store {
       .maybeSingle();
     return ((data?.platform_profiles as unknown) as PlatformProfile) ?? null;
   }
-  async trackProfile(userId: string, p: PublicProfile): Promise<PlatformProfile> {
+  async trackProfile(userId: string, p: PublicProfile, platform: Platform): Promise<PlatformProfile> {
     const sb = await this.client();
     const { raw_data: _raw, ...fields } = p;
     // upsert profil global
     let { data: pp } = await sb
       .from("platform_profiles")
       .select("*")
-      .eq("platform", "instagram")
+      .eq("platform", platform)
       .eq("username", p.username)
       .maybeSingle();
     if (!pp) {
       const ins = await sb
         .from("platform_profiles")
-        .insert({ ...fields, platform: "instagram", last_checked_at: new Date().toISOString() })
+        .insert({ ...fields, platform, last_checked_at: new Date().toISOString() })
         .select()
         .single();
       if (ins.error) throw ins.error;

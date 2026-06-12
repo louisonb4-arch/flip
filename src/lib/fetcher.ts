@@ -96,14 +96,19 @@ export class ExternalProviderFetcher implements ProfileFetcher {
 }
 
 // --- Factory -------------------------------------------------------------
+// Un fetcher par plateforme : aujourd'hui mock partout en dev, mais chaque
+// plateforme pourra brancher son propre provider (IG, TikTok, X...) via env
+// PROFILE_PROVIDER_URL_<PLATFORM> sans toucher au reste du code.
 
-export function getFetcher(): ProfileFetcher {
+import type { Platform } from "./types";
+
+export function getFetcher(platform: Platform = "instagram"): ProfileFetcher {
   const mode = process.env.PROFILE_FETCHER ?? "mock";
-  if (mode === "external" && process.env.PROFILE_PROVIDER_URL && process.env.PROFILE_PROVIDER_KEY) {
-    return new ExternalProviderFetcher(
-      process.env.PROFILE_PROVIDER_URL,
-      process.env.PROFILE_PROVIDER_KEY,
-    );
+  const key = platform.toUpperCase();
+  const url = process.env[`PROFILE_PROVIDER_URL_${key}`] ?? process.env.PROFILE_PROVIDER_URL;
+  const apiKey = process.env[`PROFILE_PROVIDER_KEY_${key}`] ?? process.env.PROFILE_PROVIDER_KEY;
+  if (mode === "external" && url && apiKey) {
+    return new ExternalProviderFetcher(url, apiKey);
   }
   return new MockFetcher();
 }

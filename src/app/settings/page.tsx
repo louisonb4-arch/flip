@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/ui";
-import type { NotificationSettings, User } from "@/lib/types";
+import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/lib/types";
+
+const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
+  { plan: "starter", price: "1,99€", desc: "3 profils IG · 1×/jour · historique limité" },
+  { plan: "premium", price: "4,99€", desc: "30 profils IG · 6 h · historique complet" },
+  { plan: "social_plus", price: "9,99€", desc: "30 IG + 10 TikTok · 2 h · digest hebdo" },
+];
 
 const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[] = [
   { key: "bio_enabled", label: "Bio modifiée", icon: "Aa" },
@@ -40,7 +46,7 @@ export default function SettingsPage() {
     setUser(d.user);
   }
 
-  const premium = user?.plan === "premium";
+  const current = user?.plan;
 
   return (
     <AppShell>
@@ -48,27 +54,37 @@ export default function SettingsPage() {
 
       {/* plan */}
       <div className="flip-card mt-5 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-400">Plan actuel</p>
-            <p className="text-xl font-extrabold capitalize">
-              {user?.plan ?? "…"} {premium && "✨"}
-            </p>
-          </div>
-          <button
-            onClick={() => patch({ plan: premium ? "starter" : "premium" })}
-            className={`rounded-full px-5 py-2.5 text-sm font-bold transition hover:scale-105 ${
-              premium ? "bg-gray-100 text-gray-500" : "flip-gradient text-white shadow-lg shadow-pink-200"
-            }`}
-          >
-            {premium ? "Repasser starter" : "Passer premium ✨"}
-          </button>
+        <p className="text-sm text-gray-400">Plan actuel</p>
+        <p className="text-xl font-extrabold">{current ? PLAN_LABELS[current] : "…"}</p>
+
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+          {PLAN_CARDS.map((c) => {
+            const active = current === c.plan;
+            return (
+              <button
+                key={c.plan}
+                onClick={() => !active && patch({ plan: c.plan })}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  active
+                    ? "border-flip-pink bg-flip-soft"
+                    : "border-gray-100 hover:border-flip-pink"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold">{PLAN_LABELS[c.plan]}</span>
+                  {active && <span className="text-xs font-bold text-flip-pink">actuel</span>}
+                </div>
+                <p className="mt-1 text-lg font-extrabold">
+                  {c.price}
+                  <span className="text-xs font-medium text-gray-400">/mois</span>
+                </p>
+                <p className="mt-1 text-xs text-gray-400">{c.desc}</p>
+              </button>
+            );
+          })}
         </div>
         <p className="mt-3 text-xs text-gray-400">
-          {premium
-            ? "25 profils · checks toutes les 6 h · historique complet."
-            : "Starter 1,99€/mois : 3 profils · check 1×/jour · 20 derniers changements."}
-          {" "}(Paiement Stripe branché plus tard — toggle démo.)
+          Paiement Stripe branché plus tard — changement de plan en démo.
         </p>
       </div>
 
