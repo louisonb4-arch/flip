@@ -22,8 +22,34 @@ export function timeAgo(iso: string | null): string {
 function usePushRegistration() {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-    // SW enregistré dès le chargement ; l'abonnement push attend l'opt-in (toggle réglages)
+
     navigator.serviceWorker.register("/sw.js").catch(() => {});
+
+    // Auto-réparation : si la permission est déjà accordée (ex: après réinstall PWA),
+    // on (re)crée l'abonnement et on le renvoie au serveur. Idempotent (upsert par endpoint).
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted" &&
+      "PushManager" in window &&
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    ) {
+      navigator.serviceWorker.ready
+        .then(async (reg) => {
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+            });
+          }
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(sub),
+          });
+        })
+        .catch(() => {});
+    }
   }, []);
 }
 
