@@ -72,15 +72,19 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
     await store.updatePlatformProfile(profile.id, fresh);
   }
 
-  // Backoff adaptatif : met à jour le score d'activité du profil.
-  // Un changement → score monte (check plus agressif) ; rien → score baisse.
-  const currentScore = profile.activity_score ?? ACTIVITY_START;
-  const updatedScore = nextScore(currentScore, changeCount, profile.last_checked_at);
-  if (updatedScore !== currentScore) {
-    await store.updateActivityScore(profile.id, updatedScore);
-  }
-
   await store.touchChecked(profile.id);
+
+  // Backoff adaptatif : NON BLOQUANT — une optim ne doit jamais casser une notif.
+  // (ex: si la colonne activity_score n'existe pas encore, on ignore.)
+  try {
+    const currentScore = profile.activity_score ?? ACTIVITY_START;
+    const updatedScore = nextScore(currentScore, changeCount, profile.last_checked_at);
+    if (updatedScore !== currentScore) {
+      await store.updateActivityScore(profile.id, updatedScore);
+    }
+  } catch (e) {
+    console.warn(`[checker] score non mis à jour @${profile.username}:`, e);
+  }
   return { profile: profile.username, changes: changeCount, notified };
 }
 
