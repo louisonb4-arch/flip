@@ -187,7 +187,7 @@ export default function Landing() {
                 9,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
-                <li>📸 <strong>30 profils</strong> Instagram</li>
+                <li>📸 <strong>25 profils</strong> Instagram</li>
                 <li className="font-semibold text-indigo-600">🎵 <strong>+ 10 profils</strong> TikTok</li>
                 <li>⚡ Checks <strong>toutes les 2 h</strong></li>
                 <li>📚 Historique complet</li>

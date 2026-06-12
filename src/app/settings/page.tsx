@@ -7,7 +7,7 @@ import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/
 const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
   { plan: "starter", price: "1,99€", desc: "3 profils IG · 1×/jour · historique limité" },
   { plan: "premium", price: "4,99€", desc: "15 profils IG · 6 h · historique complet" },
-  { plan: "social_plus", price: "9,99€", desc: "30 IG + 10 TikTok · 2 h · digest hebdo" },
+  { plan: "social_plus", price: "9,99€", desc: "25 IG + 10 TikTok · 2 h · digest hebdo" },
 ];
 
 const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[] = [

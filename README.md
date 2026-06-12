@@ -47,7 +47,7 @@ Sans clés Supabase → **DevStore** local (`.data/dev-db.json`), user démo, fe
 
 | | Starter 1,99€ | Premium 4,99€ | Social+ 9,99€ |
 |---|---|---|---|
-| Instagram | 3 profils | 15 profils | 30 profils |
+| Instagram | 3 profils | 15 profils | 25 profils |
 | TikTok | — | — | 10 profils |
 | Fréquence checks | 1×/jour | toutes les 6 h | toutes les 2 h |
 | Historique | 20 derniers | complet | complet |
