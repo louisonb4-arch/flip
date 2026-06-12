@@ -64,7 +64,7 @@ export default function HistoryPage() {
 
       {limited && changes && changes.length > 0 && (
         <p className="mt-4 rounded-xl bg-flip-soft px-4 py-3 text-center text-sm font-medium text-flip-pink">
-          Historique limité aux 20 derniers en gratuit.{" "}
+          Historique limité aux 20 derniers en starter.{" "}
           <Link href="/settings" className="font-bold underline">
             Passe premium →
           </Link>

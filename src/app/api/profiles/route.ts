@@ -20,7 +20,12 @@ export async function GET() {
     for (const c of changes) {
       if (!c.seen) unseenByProfile[c.tracked_profile_id] = (unseenByProfile[c.tracked_profile_id] ?? 0) + 1;
     }
-    return NextResponse.json({ profiles, user, unseenByProfile, limits: PLAN_LIMITS[user.plan] });
+    return NextResponse.json({
+      profiles,
+      user,
+      unseenByProfile,
+      limits: PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter,
+    });
   } catch (e) {
     console.error("[api/profiles GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
@@ -49,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `@${username} est déjà suivi` }, { status: 409 });
     }
 
-    const limit = PLAN_LIMITS[user.plan].maxProfiles;
+    const limit = (PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter).maxProfiles;
     if (existing.length >= limit) {
       return NextResponse.json(
         { error: `Limite ${limit} profils atteinte. Passe premium pour en suivre plus.`, upgrade: true },

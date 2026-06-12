@@ -10,10 +10,10 @@ export async function GET(req: NextRequest) {
     const userId = getCurrentUserId();
     const user = await store.getUser(userId);
     const type = req.nextUrl.searchParams.get("type") ?? undefined;
-    // freemium : historique limité à 20 événements en gratuit
+    // historique limité à 20 événements en starter
     const limit = user.plan === "premium" ? 500 : 20;
     const changes = await store.listChanges(userId, { type, limit });
-    return NextResponse.json({ changes, plan: user.plan, limited: user.plan === "free" });
+    return NextResponse.json({ changes, plan: user.plan, limited: user.plan === "starter" });
   } catch (e) {
     console.error("[api/changes GET]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

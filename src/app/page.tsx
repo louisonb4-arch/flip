@@ -69,8 +69,10 @@ export default function Landing() {
           <h2 className="text-center text-3xl font-extrabold">Pricing simple.</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="flip-card p-8">
-              <h3 className="font-bold text-gray-500">Gratuit</h3>
-              <p className="mt-2 text-4xl font-extrabold">0€</p>
+              <h3 className="font-bold text-gray-500">Starter</h3>
+              <p className="mt-2 text-4xl font-extrabold">
+                1,99€<span className="text-base font-medium text-gray-400">/mois</span>
+              </p>
               <ul className="mt-6 space-y-2 text-sm text-gray-500">
                 <li>✓ 3 profils suivis</li>
                 <li>✓ Check toutes les heures</li>

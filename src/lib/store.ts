@@ -36,7 +36,7 @@ export interface Store {
 
 // ---------------- DevStore (JSON local, mono-user démo) ----------------
 
-const DEV_USER: User = { id: "demo-user", email: "demo@flip.app", plan: "free" };
+const DEV_USER: User = { id: "demo-user", email: "demo@flip.app", plan: "starter" };
 
 interface DevDb {
   user: User;
@@ -65,6 +65,10 @@ class DevStore implements Store {
     if (this.db) return this.db;
     try {
       this.db = JSON.parse(await fs.readFile(this.file, "utf8"));
+      // migration anciens plans ("free" → "starter")
+      if (this.db && this.db.user.plan !== "starter" && this.db.user.plan !== "premium") {
+        this.db.user.plan = "starter";
+      }
     } catch {
       this.db = {
         user: DEV_USER,

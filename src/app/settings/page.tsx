@@ -54,18 +54,18 @@ export default function SettingsPage() {
             </p>
           </div>
           <button
-            onClick={() => patch({ plan: premium ? "free" : "premium" })}
+            onClick={() => patch({ plan: premium ? "starter" : "premium" })}
             className={`rounded-full px-5 py-2.5 text-sm font-bold transition hover:scale-105 ${
               premium ? "bg-gray-100 text-gray-500" : "flip-gradient text-white shadow-lg shadow-pink-200"
             }`}
           >
-            {premium ? "Repasser gratuit" : "Passer premium ✨"}
+            {premium ? "Repasser starter" : "Passer premium ✨"}
           </button>
         </div>
         <p className="mt-3 text-xs text-gray-400">
           {premium
             ? "25 profils · checks 15 min · historique complet."
-            : "Gratuit : 3 profils · checks 60 min · 20 derniers changements."}
+            : "Starter 1,99€/mois : 3 profils · checks 60 min · 20 derniers changements."}
           {" "}(Paiement Stripe branché plus tard — toggle démo.)
         </p>
       </div>

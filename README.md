@@ -2,7 +2,7 @@
 
 > Ton crush change sa bio ? Flip te le dit srx.
 
-Suivi de profils Instagram **publics** : bio, photo, nom, lien, privé/public. Notification dès qu'un profil change. Historique AVANT / APRÈS. Freemium (3 profils gratuits).
+Suivi de profils Instagram **publics** : bio, photo, nom, lien, privé/public. Notification dès qu'un profil change. Historique AVANT / APRÈS. Deux plans payants : Starter 1,99€/mois, Premium 4,99€/mois.
 
 **Disclaimer** : Flip ne suit que des informations publiques observables. Aucun identifiant Instagram n'est demandé ni stocké.
 
@@ -41,9 +41,9 @@ Sans clés Supabase → **DevStore** local (`.data/dev-db.json`), user démo, fe
 | GET/PATCH | `/api/settings` | préférences notifs + plan |
 | GET | `/api/cron/check` | check global (protégé `CRON_SECRET`) |
 
-## Freemium
+## Plans
 
-| | Gratuit | Premium |
+| | Starter 1,99€/mois | Premium 4,99€/mois |
 |---|---|---|
 | Profils | 3 | 25 |
 | Fréquence checks | 60 min | 15 min |

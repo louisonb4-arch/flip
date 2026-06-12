@@ -1,4 +1,4 @@
-export type Plan = "free" | "premium";
+export type Plan = "starter" | "premium";
 
 export type ChangeType =
   | "bio"
@@ -65,7 +65,7 @@ export interface User {
 }
 
 export const PLAN_LIMITS: Record<Plan, { maxProfiles: number; checkIntervalMin: number }> = {
-  free: { maxProfiles: 3, checkIntervalMin: 60 },
+  starter: { maxProfiles: 3, checkIntervalMin: 60 },
   premium: { maxProfiles: 25, checkIntervalMin: 15 },
 };
 
