@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell, ChangeRow, EmptyState, timeAgo } from "@/components/ui";
+import { AppShell, FlipRow, EmptyState, timeAgo } from "@/components/ui";
 import type { PlatformProfile, UserNotification } from "@/lib/types";
 
 interface Data {
@@ -101,12 +101,12 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       </div>
 
       {/* avant / après */}
-      <h2 className="mt-8 text-lg font-extrabold">Changements récents · AVANT / APRÈS</h2>
+      <h2 className="mt-8 text-lg font-extrabold">Derniers Flips · AVANT / APRÈS</h2>
       <div className="flip-card mt-3 divide-y divide-gray-50">
         {data.changes.length === 0 ? (
-          <EmptyState title="Aucun changement détecté" sub="Flip surveille. Dès que ça bouge, c'est ici." />
+          <EmptyState title="Aucun Flip détecté" sub="Flip surveille. Dès que ça bouge, c'est ici." />
         ) : (
-          data.changes.map((c) => <ChangeRow key={c.id} change={c} showUser={false} />)
+          data.changes.map((c) => <FlipRow key={c.id} flip={c} showUser={false} />)
         )}
       </div>
     </AppShell>

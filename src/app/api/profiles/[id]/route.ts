@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, getCurrentUserId } from "@/lib/store";
+import { getStore } from "@/lib/store";
+import { getSessionUserId } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// :id = platform_profile_id
-// GET /api/profiles/:id — profil + notifications du user + snapshots
+// GET /api/profiles/:id — profil + Flips du user + snapshots
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const profile = await store.getTrackedProfile(userId, id);
     if (!profile) return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
     const [changes, snapshots] = await Promise.all([
@@ -23,12 +24,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-// DELETE /api/profiles/:id — ne plus suivre (purge le profil global si plus aucun abonné)
+// DELETE /api/profiles/:id — ne plus suivre
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const profile = await store.getTrackedProfile(userId, id);
     if (!profile) return NextResponse.json({ error: "Profil introuvable" }, { status: 404 });
     await store.untrack(userId, id);

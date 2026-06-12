@@ -60,7 +60,70 @@ export class MockFetcher implements ProfileFetcher {
   }
 }
 
-// --- 2. Provider externe (production, plus tard) ------------------------
+// --- 2. Instagram web (endpoint public, sans login) ----------------------
+// Lit le même endpoint JSON que la page profil publique d'Instagram.
+// Aucun compte, aucun mot de passe : uniquement des données publiques.
+// Limites : rate-limit IP. OK en beta ; passer derrière des proxies pour scaler.
+
+const IG_APP_ID = "936619743392459"; // app id public de la web app Instagram
+const IG_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+
+// Les URLs CDN Instagram sont signées + hotlink-protected → proxy d'images.
+function proxyImage(url: string | null): string | null {
+  if (!url) return null;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+}
+
+export class InstagramWebFetcher implements ProfileFetcher {
+  name = "instagram_web";
+
+  async fetchProfile(username: string): Promise<PublicProfile | null> {
+    fetchCounter[username] = (fetchCounter[username] ?? 0) + 1;
+    const res = await fetch(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(username)}`,
+      {
+        headers: {
+          "x-ig-app-id": IG_APP_ID,
+          "User-Agent": IG_UA,
+          Accept: "*/*",
+          "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+          Referer: `https://www.instagram.com/${encodeURIComponent(username)}/`,
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Dest": "empty",
+        },
+        signal: AbortSignal.timeout(15_000),
+        cache: "no-store",
+      },
+    );
+
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Instagram web error ${res.status}`);
+
+    const json = await res.json().catch(() => null);
+    const u = json?.data?.user;
+    if (!u) return null; // profil inexistant ou réponse inattendue
+
+    return {
+      username: u.username ?? username,
+      display_name: u.full_name || null,
+      profile_image_url: proxyImage(u.profile_pic_url_hd ?? u.profile_pic_url ?? null),
+      bio: u.biography || null,
+      bio_link:
+        u.external_url ||
+        u.bio_links?.[0]?.url ||
+        null,
+      followers_count: u.edge_followed_by?.count ?? null,
+      following_count: u.edge_follow?.count ?? null,
+      posts_count: u.edge_owner_to_timeline_media?.count ?? null,
+      is_private: u.is_private ?? null,
+      raw_data: { source: "instagram_web" },
+    };
+  }
+}
+
+// --- 3. Provider externe (production, plus tard) ------------------------
 // Brancher ici un provider de données publiques légalement utilisable
 // (API officielle si accessible, ou provider tiers sous contrat).
 // Configuré via PROFILE_PROVIDER_URL + PROFILE_PROVIDER_KEY.
@@ -109,6 +172,10 @@ export function getFetcher(platform: Platform = "instagram"): ProfileFetcher {
   const apiKey = process.env[`PROFILE_PROVIDER_KEY_${key}`] ?? process.env.PROFILE_PROVIDER_KEY;
   if (mode === "external" && url && apiKey) {
     return new ExternalProviderFetcher(url, apiKey);
+  }
+  // mode "web" : endpoint public Instagram (les autres plateformes restent mock)
+  if (mode === "web" && platform === "instagram") {
+    return new InstagramWebFetcher();
   }
   return new MockFetcher();
 }

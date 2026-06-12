@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, getCurrentUserId } from "@/lib/store";
+import { getStore } from "@/lib/store";
+import { getSessionUserId } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,8 @@ const BOOL_KEYS = [
 export async function GET() {
   try {
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const [settings, user] = await Promise.all([store.getSettings(userId), store.getUser(userId)]);
     return NextResponse.json({ settings, user });
   } catch (e) {
@@ -30,11 +32,12 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const body = await req.json().catch(() => ({}));
 
     // toggle plan (dev/demo — en prod : Stripe webhook)
-    if (body.plan === "starter" || body.plan === "premium" || body.plan === "social_plus") {
+    if (body.plan === "flip_mini" || body.plan === "flip_plus" || body.plan === "flip_ultra") {
       await store.setPlan(userId, body.plan);
     }
 

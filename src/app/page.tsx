@@ -129,16 +129,16 @@ export default function Landing() {
           </p>
 
           <div className="mt-10 grid items-start gap-5 lg:grid-cols-3">
-            {/* Starter */}
+            {/* Flip Mini */}
             <div className="flip-card flex flex-col p-7">
-              <h3 className="font-bold text-gray-500">Starter</h3>
-              <p className="mt-1 text-xs text-gray-400">Pour découvrir Flip.</p>
+              <h3 className="font-bold text-gray-500">Flip Mini</h3>
+              <p className="mt-1 text-xs text-gray-400">Vérification quotidienne.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 1,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>3 profils</strong> Instagram</li>
-                <li>🕐 Check <strong>1×/jour</strong></li>
+                <li>🕐 <strong>Vérification quotidienne</strong></li>
                 <li>📋 20 derniers changements</li>
                 <li>🔔 Alertes de base</li>
               </ul>
@@ -150,19 +150,19 @@ export default function Landing() {
               </Link>
             </div>
 
-            {/* Premium — mis en avant */}
+            {/* Flip Plus — mis en avant */}
             <div className="flip-card relative flex flex-col border-2 border-flip-pink p-7 shadow-xl shadow-pink-100 lg:-mt-4 lg:scale-[1.04]">
               <span className="flip-gradient absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-1 text-xs font-bold text-white shadow">
                 ⭐ POPULAIRE
               </span>
-              <h3 className="font-bold text-flip-pink">Premium</h3>
-              <p className="mt-1 text-xs text-gray-400">Le plan principal.</p>
+              <h3 className="font-bold text-flip-pink">Flip Plus</h3>
+              <p className="mt-1 text-xs text-gray-400">Surveillance renforcée.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 4,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>15 profils</strong> Instagram</li>
-                <li>⚡ Checks <strong>toutes les 6 h</strong></li>
+                <li>⚡ <strong>Surveillance renforcée</strong></li>
                 <li>📚 Historique complet</li>
                 <li>🚀 Alertes prioritaires</li>
                 <li>🔀 Comparaison Avant / Après</li>
@@ -172,24 +172,24 @@ export default function Landing() {
                 href="/dashboard"
                 className="flip-gradient mt-7 rounded-full py-3 text-center text-sm font-bold text-white shadow-lg shadow-pink-200 transition hover:scale-105"
               >
-                Passer Premium
+                Passer Flip Plus
               </Link>
             </div>
 
-            {/* Social+ — multi-plateformes */}
+            {/* Flip Ultra — multi-plateformes */}
             <div className="flip-card relative flex flex-col border border-indigo-100 p-7">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-4 py-1 text-xs font-bold text-white shadow">
                 ✨ Multi-plateformes
               </span>
-              <h3 className="font-bold text-indigo-500">Social+</h3>
-              <p className="mt-1 text-xs text-gray-400">Le plus avancé.</p>
+              <h3 className="font-bold text-indigo-500">Flip Ultra</h3>
+              <p className="mt-1 text-xs text-gray-400">Surveillance prioritaire.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 9,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>25 profils</strong> Instagram</li>
                 <li className="font-semibold text-indigo-600">🎵 <strong>+ 10 profils</strong> TikTok</li>
-                <li>⚡ Checks <strong>toutes les 2 h</strong></li>
+                <li>⚡ <strong>Surveillance prioritaire</strong></li>
                 <li>📚 Historique complet</li>
                 <li>📬 Digest hebdomadaire</li>
                 <li>📈 Suivi avancé followers / posts</li>
@@ -199,7 +199,7 @@ export default function Landing() {
                 href="/dashboard"
                 className="mt-7 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 py-3 text-center text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:scale-105"
               >
-                Passer Social+
+                Passer Flip Ultra
               </Link>
             </div>
           </div>

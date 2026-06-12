@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/ui";
+import Link from "next/link";
+import { AppShell, enablePushSubscription } from "@/components/ui";
 import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/lib/types";
 
 const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
-  { plan: "starter", price: "1,99€", desc: "3 profils IG · 1×/jour · historique limité" },
-  { plan: "premium", price: "4,99€", desc: "15 profils IG · 6 h · historique complet" },
-  { plan: "social_plus", price: "9,99€", desc: "25 IG + 10 TikTok · 2 h · digest hebdo" },
+  { plan: "flip_mini", price: "1,99€", desc: "3 profils IG · Vérification quotidienne · historique limité" },
+  { plan: "flip_plus", price: "4,99€", desc: "15 profils IG · Surveillance renforcée · historique complet" },
+  { plan: "flip_ultra", price: "9,99€", desc: "25 IG + 10 TikTok · Surveillance prioritaire · digest hebdo" },
 ];
 
 const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[] = [
@@ -36,6 +37,20 @@ export default function SettingsPage() {
   }, []);
 
   async function patch(body: Record<string, unknown>) {
+    // activation des alertes push → permission navigateur + abonnement d'abord
+    if (body.push_enabled === true) {
+      const result = await enablePushSubscription();
+      if (result === "denied") {
+        alert("Notifications bloquées par le navigateur. Autorise-les dans les réglages du site.");
+        return;
+      }
+      if (result === "unsupported") {
+        alert(
+          "Push non supporté ici. Sur iPhone : ajoute Flip à l'écran d'accueil (Partager → Sur l'écran d'accueil) puis réessaie.",
+        );
+        return;
+      }
+    }
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -87,6 +102,21 @@ export default function SettingsPage() {
           Paiement Stripe branché plus tard — changement de plan en démo.
         </p>
       </div>
+
+      {/* parrainage */}
+      <Link
+        href="/referrals"
+        className="mt-5 flex items-center justify-between rounded-2xl bg-flip-soft px-5 py-4 transition hover:bg-pink-100"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🎁</span>
+          <div>
+            <p className="text-sm font-bold text-flip-pink">Parrainage</p>
+            <p className="text-xs text-gray-400">Invite tes amis, gagne jusqu&apos;à 30 jours offerts</p>
+          </div>
+        </div>
+        <span className="text-gray-300">›</span>
+      </Link>
 
       {/* notifications */}
       <h2 className="mt-8 text-lg font-extrabold">Notifications</h2>

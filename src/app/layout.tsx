@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   title: "Flip — Ne rate aucun update",
   description:
     "Ton crush change sa bio ? Flip te le dit. Suivi de profils Instagram publics : bio, photo, nom, lien.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Flip",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#f43f5e",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

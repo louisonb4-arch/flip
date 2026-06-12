@@ -6,6 +6,8 @@
 import { getFetcher } from "./fetcher";
 import { diffSnapshots, isEnabled } from "./diff";
 import { getStore } from "./store";
+import { getFlipCopy } from "./flip";
+import { sendFlipPush } from "./push";
 import { CHANGE_LABELS, PLAN_LIMITS, type NotificationSettings, type Plan, type PlatformProfile, type ProfileChange } from "./types";
 
 export interface CheckResult {
@@ -48,7 +50,17 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
           .map((s) => s.user_id);
         await store.distribute(change, targets);
         notified += targets.length;
-        if (d.severity === "major") logNotify(profile.username, change);
+        if (d.severity === "major") {
+          logNotify(profile.username, change);
+          // Web Push réel — uniquement les abonnés avec push activé
+          const pushTargets = targets.filter(
+            (uid) => settingsByUser.get(uid)?.push_enabled,
+          );
+          const copy = getFlipCopy(d.change_type, profile.username, d.old_value, d.new_value);
+          await sendFlipPush(pushTargets, copy).catch((e) =>
+            console.warn("[push] envoi échoué:", e),
+          );
+        }
       }
       await store.addSnapshot(profile.id, fresh); // nouveau snapshot uniquement si changement
       await store.updatePlatformProfile(profile.id, fresh);

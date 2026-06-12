@@ -67,11 +67,25 @@ export interface Store {
   // digest
   pendingDigest(userId: string): Promise<UserNotification[]>;
   markDigested(userId: string): Promise<void>;
+
+  // push subscriptions (web push)
+  savePushSubscription(userId: string, subscription: PushSubscriptionJSON): Promise<void>;
+  getPushSubscriptions(userId: string): Promise<PushSubscriptionJSON[]>;
+
+  // referrals
+  getReferralCode(userId: string): Promise<string | null>;
+  createReferralCode(userId: string, code: string): Promise<string>;
+  getReferrerByCode(code: string): Promise<string | null>;
+  getReferralCount(userId: string): Promise<number>;
+  addReferral(referrerId: string, referredId: string): Promise<{ ok: boolean; error?: string }>;
+  getUnlockedRewards(userId: string): Promise<{ milestone: number; reward_days: number; unlocked_at: string; claimed_at: string | null }[]>;
+  unlockMilestone(userId: string, milestone: number, rewardDays: number): Promise<void>;
+  getTotalBonusDays(userId: string): Promise<number>;
 }
 
 // ---------------- DevStore (JSON local, multi-user supporté) ----------------
 
-const DEV_USER: User = { id: "demo-user", email: "demo@flip.app", plan: "starter" };
+const DEV_USER: User = { id: "demo-user", email: "demo@flip.app", plan: "flip_mini" };
 
 interface DevNotif {
   id: string;
@@ -91,6 +105,10 @@ interface DevDb {
   snapshots: Snapshot[];
   changes: ProfileChange[];
   notifications: DevNotif[];
+  pushSubscriptions: { user_id: string; subscription: PushSubscriptionJSON }[];
+  referralCodes: { user_id: string; code: string }[];
+  referrals: { referrer_user_id: string; referred_user_id: string }[];
+  referralRewards: { user_id: string; milestone: number; reward_days: number; unlocked_at: string; claimed_at: string | null }[];
 }
 
 const DEFAULT_SETTINGS = (userId: string): NotificationSettings => ({
@@ -123,6 +141,10 @@ class DevStore implements Store {
         snapshots: [],
         changes: [],
         notifications: [],
+        pushSubscriptions: [],
+        referralCodes: [],
+        referrals: [],
+        referralRewards: [],
       };
     }
     return this.db!;
@@ -135,7 +157,7 @@ class DevStore implements Store {
 
   async getUser(userId: string) {
     const db = await this.load();
-    return db.users.find((u) => u.id === userId) ?? { id: userId, email: `${userId}@flip.app`, plan: "starter" };
+    return db.users.find((u) => u.id === userId) ?? { id: userId, email: `${userId}@flip.app`, plan: "flip_mini" };
   }
   async setPlan(userId: string, plan: User["plan"]) {
     const db = await this.load();
@@ -242,7 +264,7 @@ class DevStore implements Store {
         db.tracked.filter((t) => t.platform_profile_id === platformProfileId).map((t) => t.user_id),
       ),
     ];
-    return ids.map((id) => ({ user_id: id, plan: (db.users.find((u) => u.id === id)?.plan ?? "starter") }));
+    return ids.map((id) => ({ user_id: id, plan: (db.users.find((u) => u.id === id)?.plan ?? "flip_mini") }));
   }
   async updatePlatformProfile(id: string, p: PublicProfile) {
     const db = await this.load();
@@ -376,6 +398,79 @@ class DevStore implements Store {
     for (const n of db.notifications) if (n.user_id === userId) n.digested = true;
     await this.save();
   }
+
+  async savePushSubscription(userId: string, subscription: PushSubscriptionJSON) {
+    const db = await this.load();
+    if (!db.pushSubscriptions) db.pushSubscriptions = [];
+    const endpoint = subscription.endpoint;
+    const existing = db.pushSubscriptions.findIndex(
+      (s) => s.user_id === userId && s.subscription.endpoint === endpoint,
+    );
+    if (existing >= 0) db.pushSubscriptions[existing].subscription = subscription;
+    else db.pushSubscriptions.push({ user_id: userId, subscription });
+    await this.save();
+  }
+  async getPushSubscriptions(userId: string) {
+    const db = await this.load();
+    if (!db.pushSubscriptions) return [];
+    return db.pushSubscriptions.filter((s) => s.user_id === userId).map((s) => s.subscription);
+  }
+
+  async getReferralCode(userId: string) {
+    const db = await this.load();
+    return db.referralCodes?.find((r) => r.user_id === userId)?.code ?? null;
+  }
+  async createReferralCode(userId: string, code: string) {
+    const db = await this.load();
+    if (!db.referralCodes) db.referralCodes = [];
+    if (!db.referralCodes.find((r) => r.user_id === userId)) {
+      db.referralCodes.push({ user_id: userId, code });
+      await this.save();
+    }
+    return db.referralCodes.find((r) => r.user_id === userId)!.code;
+  }
+  async getReferrerByCode(code: string) {
+    const db = await this.load();
+    return db.referralCodes?.find((r) => r.code === code)?.user_id ?? null;
+  }
+  async getReferralCount(userId: string) {
+    const db = await this.load();
+    return (db.referrals ?? []).filter((r) => r.referrer_user_id === userId).length;
+  }
+  async addReferral(referrerId: string, referredId: string) {
+    const db = await this.load();
+    if (!db.referrals) db.referrals = [];
+    if (db.referrals.find((r) => r.referred_user_id === referredId)) {
+      return { ok: false, error: "Utilisateur déjà parrainé." };
+    }
+    db.referrals.push({ referrer_user_id: referrerId, referred_user_id: referredId });
+    await this.save();
+    return { ok: true };
+  }
+  async getUnlockedRewards(userId: string) {
+    const db = await this.load();
+    return (db.referralRewards ?? []).filter((r) => r.user_id === userId);
+  }
+  async unlockMilestone(userId: string, milestone: number, rewardDays: number) {
+    const db = await this.load();
+    if (!db.referralRewards) db.referralRewards = [];
+    if (!db.referralRewards.find((r) => r.user_id === userId && r.milestone === milestone)) {
+      db.referralRewards.push({
+        user_id: userId,
+        milestone,
+        reward_days: rewardDays,
+        unlocked_at: new Date().toISOString(),
+        claimed_at: null,
+      });
+      await this.save();
+    }
+  }
+  async getTotalBonusDays(userId: string) {
+    const db = await this.load();
+    return (db.referralRewards ?? [])
+      .filter((r) => r.user_id === userId)
+      .reduce((sum, r) => sum + r.reward_days, 0);
+  }
 }
 
 // ---------------- SupabaseStore (production) ----------------
@@ -502,7 +597,7 @@ class SupabaseStore implements Store {
       .eq("platform_profile_id", platformProfileId);
     return (data ?? []).map((r: Record<string, unknown>) => ({
       user_id: r.user_id as string,
-      plan: ((r.users as { plan?: User["plan"] } | null)?.plan ?? "starter") as User["plan"],
+      plan: ((r.users as { plan?: User["plan"] } | null)?.plan ?? "flip_mini") as User["plan"],
     }));
   }
   async updatePlatformProfile(id: string, p: PublicProfile) {
@@ -652,6 +747,88 @@ class SupabaseStore implements Store {
   async markDigested(userId: string) {
     const sb = await this.client();
     await sb.from("user_notifications").update({ digested: true }).eq("user_id", userId).eq("digested", false);
+  }
+
+  async savePushSubscription(userId: string, subscription: PushSubscriptionJSON) {
+    const sb = await this.client();
+    await sb
+      .from("push_subscriptions")
+      .upsert(
+        { user_id: userId, endpoint: subscription.endpoint, subscription: JSON.stringify(subscription) },
+        { onConflict: "user_id,endpoint" },
+      );
+  }
+  async getPushSubscriptions(userId: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("push_subscriptions").select("subscription").eq("user_id", userId);
+    return (data ?? []).map((r: { subscription: string }) => JSON.parse(r.subscription) as PushSubscriptionJSON);
+  }
+
+  async getReferralCode(userId: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("referral_codes").select("code").eq("user_id", userId).maybeSingle();
+    return (data as { code: string } | null)?.code ?? null;
+  }
+  async createReferralCode(userId: string, code: string) {
+    const sb = await this.client();
+    await sb.from("referral_codes").upsert({ user_id: userId, code }, { onConflict: "user_id" });
+    const { data } = await sb.from("referral_codes").select("code").eq("user_id", userId).single();
+    return (data as { code: string }).code;
+  }
+  async getReferrerByCode(code: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("referral_codes").select("user_id").eq("code", code).maybeSingle();
+    return (data as { user_id: string } | null)?.user_id ?? null;
+  }
+  async getReferralCount(userId: string) {
+    const sb = await this.client();
+    const { count } = await sb
+      .from("referrals")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_user_id", userId)
+      .eq("status", "completed");
+    return count ?? 0;
+  }
+  async addReferral(referrerId: string, referredId: string) {
+    const sb = await this.client();
+    const { error } = await sb
+      .from("referrals")
+      .insert({ referrer_user_id: referrerId, referred_user_id: referredId, status: "completed" });
+    if (error) {
+      if (error.code === "23505") return { ok: false, error: "Utilisateur déjà parrainé." };
+      throw error;
+    }
+    return { ok: true };
+  }
+  async getUnlockedRewards(userId: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("referral_rewards").select("*").eq("user_id", userId);
+    return (data ?? []) as { milestone: number; reward_days: number; unlocked_at: string; claimed_at: string | null }[];
+  }
+  async unlockMilestone(userId: string, milestone: number, rewardDays: number) {
+    const sb = await this.client();
+    await sb
+      .from("referral_rewards")
+      .upsert(
+        { user_id: userId, milestone, reward_days: rewardDays, unlocked_at: new Date().toISOString() },
+        { onConflict: "user_id,milestone", ignoreDuplicates: true },
+      );
+    // Ajoute un enregistrement bonus si nouveau palier
+    const { count } = await sb
+      .from("user_bonus_days")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("source", `referral_milestone_${milestone}`);
+    if ((count ?? 0) === 0) {
+      await sb
+        .from("user_bonus_days")
+        .insert({ user_id: userId, total_days: rewardDays, source: `referral_milestone_${milestone}` });
+    }
+  }
+  async getTotalBonusDays(userId: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("referral_rewards").select("reward_days").eq("user_id", userId);
+    return (data ?? []).reduce((s: number, r: { reward_days: number }) => s + r.reward_days, 0);
   }
 }
 

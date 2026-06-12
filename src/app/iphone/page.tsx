@@ -6,7 +6,8 @@ import { useState } from "react";
 const SCREENS = [
   { path: "/", label: "Landing" },
   { path: "/dashboard", label: "Dashboard" },
-  { path: "/history", label: "Updates" },
+  { path: "/notifications", label: "Flips" },
+  { path: "/referrals", label: "Parrainage" },
   { path: "/settings", label: "Réglages" },
 ];
 

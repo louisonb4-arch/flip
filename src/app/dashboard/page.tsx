@@ -84,7 +84,7 @@ export default function Dashboard() {
       {error && (
         <p className="animate-pop mt-2 rounded-xl bg-flip-soft px-4 py-2 text-sm font-medium text-flip-pink">
           {error}{" "}
-          {error.includes("premium") && (
+          {error.includes("Upgrade") && (
             <Link href="/settings" className="underline">
               Upgrade →
             </Link>
@@ -92,10 +92,27 @@ export default function Dashboard() {
         </p>
       )}
 
+      {/* parrainage banner */}
+      <Link
+        href="/referrals"
+        className="mt-5 flex items-center justify-between rounded-2xl border border-pink-100 bg-gradient-to-r from-flip-soft to-orange-50 px-5 py-4 transition hover:scale-[1.01]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🎁</span>
+          <div>
+            <p className="text-sm font-extrabold">
+              Invite tes amis, gagne jusqu&apos;à <span className="flip-gradient-text">30 jours offerts</span>
+            </p>
+            <p className="text-xs text-gray-400">3 amis = +7 jours · 6 amis = +10 jours · 10 amis = +13 jours</p>
+          </div>
+        </div>
+        <span className="shrink-0 text-gray-300">›</span>
+      </Link>
+
       {/* list */}
       <div className="mt-6 space-y-3">
         {data && count === 0 && (
-          <EmptyState title="Personne en vue" sub="Ajoute un @ pour commencer le stalke (légal)." />
+          <EmptyState title="Aucun profil suivi" sub="Ajoute un @ pour recevoir tes premiers Flips." />
         )}
         {data?.tracked.map((t) => {
           const p = t.profile;
@@ -106,7 +123,10 @@ export default function Dashboard() {
                 <div className="flip-gradient rounded-full p-[2px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={p.profile_image_url ?? ""}
+                    src={
+                      p.profile_image_url ||
+                      `https://api.dicebear.com/9.x/initials/svg?seed=${p.username}&backgroundColor=ffe4ec&textColor=f43f5e`
+                    }
                     alt={p.username}
                     className="h-12 w-12 rounded-full border-2 border-white bg-flip-soft object-cover"
                   />
@@ -123,7 +143,7 @@ export default function Dashboard() {
               </Link>
               {unseen > 0 && (
                 <span className="flip-gradient rounded-full px-2.5 py-1 text-xs font-bold text-white">
-                  {unseen} new
+                  {unseen} Flip{unseen > 1 ? "s" : ""}
                 </span>
               )}
               <button

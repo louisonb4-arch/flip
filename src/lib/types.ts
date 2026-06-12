@@ -1,4 +1,4 @@
-export type Plan = "starter" | "premium" | "social_plus";
+export type Plan = "flip_mini" | "flip_plus" | "flip_ultra";
 
 // Plateformes surveillées. Instagram en premier ; le reste arrive progressivement.
 // Flip n'est pas une app Instagram : « Flip surveille les changements publics sur internet. »
@@ -128,27 +128,27 @@ export interface PlanLimit {
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
-  starter: {
+  flip_mini: {
     checkIntervalMin: 1440, // 24 h
     profilesByPlatform: { instagram: 3 },
     historyFull: false,
   },
-  premium: {
+  flip_plus: {
     checkIntervalMin: 360, // 6 h
     profilesByPlatform: { instagram: 15 },
     historyFull: true,
   },
-  social_plus: {
-    checkIntervalMin: 120, // 2 h
+  flip_ultra: {
+    checkIntervalMin: 180, // 3 h
     profilesByPlatform: { instagram: 25, tiktok: 10 },
     historyFull: true,
   },
 };
 
 export const PLAN_LABELS: Record<Plan, string> = {
-  starter: "Starter",
-  premium: "Premium",
-  social_plus: "Social+",
+  flip_mini: "Flip Mini",
+  flip_plus: "Flip Plus",
+  flip_ultra: "Flip Ultra",
 };
 
 // Quota de profils pour un plan sur une plateforme donnée (0 = non disponible).

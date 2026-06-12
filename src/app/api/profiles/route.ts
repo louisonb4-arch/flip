@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, getCurrentUserId } from "@/lib/store";
+import { getStore } from "@/lib/store";
+import { getSessionUserId } from "@/lib/auth";
 import { getFetcher } from "@/lib/fetcher";
 import { validateUsername, rateLimit } from "@/lib/validate";
 import { PLAN_LIMITS, PLATFORMS, planCap, planTotalProfiles, type Platform } from "@/lib/types";
@@ -10,13 +11,14 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const [tracked, user, unseenByProfile] = await Promise.all([
       store.listTracked(userId),
       store.getUser(userId),
       store.unseenByProfile(userId),
     ]);
-    const limits = PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.starter;
+    const limits = PLAN_LIMITS[user.plan] ?? PLAN_LIMITS.flip_mini;
     const totalCap = planTotalProfiles(user.plan);
     return NextResponse.json({ tracked, user, unseenByProfile, limits, totalCap });
   } catch (e) {
@@ -29,7 +31,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
 
     if (!rateLimit(`add:${userId}`, 10, 60_000)) {
       return NextResponse.json({ error: "Doucement. Réessaie dans une minute." }, { status: 429 });

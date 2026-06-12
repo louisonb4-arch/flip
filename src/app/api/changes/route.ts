@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore, getCurrentUserId } from "@/lib/store";
+import { getStore } from "@/lib/store";
+import { getSessionUserId } from "@/lib/auth";
 import { PLAN_LIMITS } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,8 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const store = getStore();
-    const userId = getCurrentUserId();
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
     const user = await store.getUser(userId);
     const type = req.nextUrl.searchParams.get("type") ?? undefined;
     // historique complet selon le plan, sinon 20 derniers
@@ -26,7 +28,9 @@ export async function GET(req: NextRequest) {
 export async function POST() {
   try {
     const store = getStore();
-    await store.markSeen(getCurrentUserId());
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+    await store.markSeen(userId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[api/changes POST]", e);
