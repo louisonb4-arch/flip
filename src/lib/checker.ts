@@ -17,7 +17,12 @@ export interface CheckResult {
   notified: number;
 }
 
-export async function checkPlatformProfile(profile: PlatformProfile): Promise<CheckResult> {
+// `preSubs` : abonnés déjà chargés par le cron (évite un 2e appel subscribersOf).
+// Appelé sans ce param (check manuel) → on les charge à la demande.
+export async function checkPlatformProfile(
+  profile: PlatformProfile,
+  preSubs?: { user_id: string; plan: Plan }[],
+): Promise<CheckResult> {
   const store = getStore();
   const fetcher = getFetcher(profile.platform);
 
@@ -35,7 +40,7 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
   if (prev) {
     const detected = diffSnapshots(prev, fresh); // 1 SEULE comparaison
     if (detected.length > 0) {
-      const subscribers = await store.subscribersOf(profile.id);
+      const subscribers = preSubs ?? (await store.subscribersOf(profile.id));
       // pré-charge les settings de chaque abonné une fois
       const settingsByUser = new Map<string, NotificationSettings>();
       for (const s of subscribers) {
@@ -89,7 +94,10 @@ export async function checkPlatformProfile(profile: PlatformProfile): Promise<Ch
 }
 
 // Plancher du plan : le PLUS COURT intervalle parmi les abonnés (meilleur plan gagne).
+// Sans abonné → on renvoie l'intervalle du plan le plus lent (jamais Infinity, qui bloquerait
+// isDue() à false pour toujours). Les appelants filtrent déjà les orphelins, ceinture+bretelles.
 function planFloorMin(plans: Plan[]): number {
+  if (plans.length === 0) return PLAN_LIMITS.flip_mini.checkIntervalMin;
   return Math.min(...plans.map((p) => PLAN_LIMITS[p].checkIntervalMin));
 }
 
@@ -108,8 +116,9 @@ export async function checkAllProfiles(): Promise<{
   const store = getStore();
   const profiles = await store.allPlatformProfilesForCheck();
 
-  // 1. Construire la file : profils dus, avec leur plancher de plan.
-  const queue: { profile: PlatformProfile; floor: number }[] = [];
+  // 1. Construire la file : profils dus, avec leur plancher de plan + abonnés déjà chargés
+  //    (réutilisés dans checkPlatformProfile → pas de 2e requête subscribersOf).
+  const queue: { profile: PlatformProfile; floor: number; subs: { user_id: string; plan: Plan }[] }[] = [];
   for (const p of profiles) {
     const subs = await store.subscribersOf(p.id);
     if (subs.length === 0) continue; // orphelin
@@ -117,7 +126,7 @@ export async function checkAllProfiles(): Promise<{
     const score = p.activity_score ?? ACTIVITY_START;
     // Fréquence réelle = max(plancher plan, intervalle activité).
     if (!isDue(p, effectiveIntervalMin(floor, score))) continue;
-    queue.push({ profile: p, floor });
+    queue.push({ profile: p, floor, subs });
   }
 
   // 2. Priorité : meilleur plan (plancher le plus court = Ultra) checké en premier.
@@ -128,10 +137,10 @@ export async function checkAllProfiles(): Promise<{
   let changes = 0;
   let notifications = 0;
 
-  for (const { profile: p } of queue) {
+  for (const { profile: p, subs } of queue) {
     try {
       fetched++;
-      const r = await checkPlatformProfile(p);
+      const r = await checkPlatformProfile(p, subs);
       changes += r.changes;
       notifications += r.notified;
     } catch (e) {

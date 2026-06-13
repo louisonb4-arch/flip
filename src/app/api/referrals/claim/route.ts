@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
     const rewards = await store.getUnlockedRewards(userId);
     const reward = rewards.find((r) => r.milestone === milestone);
     if (!reward) return NextResponse.json({ error: "Palier non débloqué." }, { status: 404 });
-    if (reward.claimed_at) return NextResponse.json({ error: "Déjà réclamé." }, { status: 409 });
 
-    // Pour l'instant : stocker claimed_at. Stripe le consommera plus tard.
-    // SupabaseStore : update ; DevStore : pas de claimed_at tracking fin, acceptable en dev.
-    return NextResponse.json({ ok: true, reward_days: reward.reward_days });
+    // Persiste claimed_at de façon atomique (anti double-réclamation). Stripe le consommera plus tard.
+    const res = await store.claimMilestone(userId, milestone);
+    if (!res.ok) return NextResponse.json({ error: "Déjà réclamé." }, { status: 409 });
+    return NextResponse.json({ ok: true, reward_days: res.reward_days });
   } catch (e) {
     console.error("[api/referrals/claim]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

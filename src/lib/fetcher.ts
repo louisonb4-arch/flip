@@ -95,6 +95,28 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// Cache des dispatchers undici : 1 ProxyAgent par URL, réutilisé entre les requêtes.
+// Sinon chaque fetch crée un nouvel agent (pool de connexions jamais drainé → fuite mémoire
+// + épuisement des sockets quand le cron tourne sur des centaines de profils).
+type UndiciMod = typeof import("undici");
+let undiciModP: Promise<UndiciMod> | null = null;
+const proxyAgents = new Map<string, InstanceType<UndiciMod["ProxyAgent"]>>();
+
+async function getUndici(): Promise<UndiciMod> {
+  if (!undiciModP) undiciModP = import("undici");
+  return undiciModP;
+}
+
+async function agentFor(proxyUrl: string): Promise<InstanceType<UndiciMod["ProxyAgent"]>> {
+  let agent = proxyAgents.get(proxyUrl);
+  if (!agent) {
+    const { ProxyAgent } = await getUndici();
+    agent = new ProxyAgent(proxyUrl);
+    proxyAgents.set(proxyUrl, agent);
+  }
+  return agent;
+}
+
 // fetch via undici (le fetch global de Node a un undici interne incompatible avec un dispatcher).
 // Essaie chaque proxy jusqu'à succès ; un 429/erreur → bascule sur le suivant.
 async function igFetch(url: string, headers: Record<string, string>): Promise<Response> {
@@ -105,7 +127,7 @@ async function igFetch(url: string, headers: Record<string, string>): Promise<Re
     return fetch(url, { ...init, cache: "no-store" });
   }
 
-  const { fetch: undiciFetch, ProxyAgent } = await import("undici");
+  const { fetch: undiciFetch } = await getUndici();
   const order = shuffle(pool);
   let lastErr: unknown = null;
 
@@ -113,7 +135,7 @@ async function igFetch(url: string, headers: Record<string, string>): Promise<Re
     try {
       const res = (await undiciFetch(url, {
         ...init,
-        dispatcher: new ProxyAgent(proxyUrl),
+        dispatcher: await agentFor(proxyUrl),
       })) as unknown as Response;
       // 401/403/429 = IP grillée ou challengée → essaie la suivante
       if (res.status === 401 || res.status === 403 || res.status === 429) {

@@ -81,6 +81,8 @@ export interface Store {
   addReferral(referrerId: string, referredId: string): Promise<{ ok: boolean; error?: string }>;
   getUnlockedRewards(userId: string): Promise<{ milestone: number; reward_days: number; unlocked_at: string; claimed_at: string | null }[]>;
   unlockMilestone(userId: string, milestone: number, rewardDays: number): Promise<void>;
+  // Marque un palier comme réclamé. Renvoie false si déjà réclamé ou non débloqué (idempotent).
+  claimMilestone(userId: string, milestone: number): Promise<{ ok: boolean; reward_days?: number }>;
   getTotalBonusDays(userId: string): Promise<number>;
 }
 
@@ -472,6 +474,17 @@ class DevStore implements Store {
       await this.save();
     }
   }
+  async claimMilestone(userId: string, milestone: number) {
+    const db = await this.load();
+    const reward = (db.referralRewards ?? []).find(
+      (r) => r.user_id === userId && r.milestone === milestone,
+    );
+    if (!reward) return { ok: false }; // non débloqué
+    if (reward.claimed_at) return { ok: false }; // déjà réclamé
+    reward.claimed_at = new Date().toISOString();
+    await this.save();
+    return { ok: true, reward_days: reward.reward_days };
+  }
   async getTotalBonusDays(userId: string) {
     const db = await this.load();
     return (db.referralRewards ?? [])
@@ -763,14 +776,18 @@ class SupabaseStore implements Store {
   async savePushSubscription(userId: string, subscription: PushSubscriptionJSON) {
     const sb = await this.client();
     // un seul appareil par user en beta : on purge les anciens endpoints (évite les orphelins
-    // qu'Apple "accepte" sans jamais livrer) puis on insère le neuf.
-    await sb.from("push_subscriptions").delete().eq("user_id", userId).neq("endpoint", subscription.endpoint);
-    await sb
+    // qu'Apple "accepte" sans jamais livrer).
+    // ORDRE IMPORTANT : on insère le neuf D'ABORD, puis on purge les autres. Si la purge échoue,
+    // pire cas = un endpoint orphelin de plus (inoffensif). L'inverse (delete puis insert raté)
+    // laisserait l'user SANS aucun abonnement push.
+    const { error } = await sb
       .from("push_subscriptions")
       .upsert(
         { user_id: userId, endpoint: subscription.endpoint, subscription: JSON.stringify(subscription) },
         { onConflict: "user_id,endpoint" },
       );
+    if (error) throw error; // surface l'échec → la route renvoie 500, le client retentera
+    await sb.from("push_subscriptions").delete().eq("user_id", userId).neq("endpoint", subscription.endpoint);
   }
   async getPushSubscriptions(userId: string) {
     const sb = await this.client();
@@ -838,6 +855,22 @@ class SupabaseStore implements Store {
         .from("user_bonus_days")
         .insert({ user_id: userId, total_days: rewardDays, source: `referral_milestone_${milestone}` });
     }
+  }
+  async claimMilestone(userId: string, milestone: number) {
+    const sb = await this.client();
+    // UPDATE conditionnel sur claimed_at IS NULL → atomique : deux requêtes simultanées,
+    // une seule renvoie une ligne. Pas de double réclamation possible.
+    const { data, error } = await sb
+      .from("referral_rewards")
+      .update({ claimed_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("milestone", milestone)
+      .is("claimed_at", null)
+      .select("reward_days");
+    if (error) throw error;
+    const row = (data ?? [])[0] as { reward_days: number } | undefined;
+    if (!row) return { ok: false }; // non débloqué ou déjà réclamé
+    return { ok: true, reward_days: row.reward_days };
   }
   async getTotalBonusDays(userId: string) {
     const sb = await this.client();

@@ -23,7 +23,9 @@ export async function buildDigest(
   period: "daily" | "weekly" = "weekly",
 ): Promise<Digest> {
   const store = getStore();
-  const notifs = await store.pendingDigest(userId);
+  // Les changements MAJEURS sont déjà envoyés en push instantané → on ne les répète pas
+  // dans le digest. Le digest = uniquement les mineurs (variations d'abonnés, etc.).
+  const notifs = (await store.pendingDigest(userId)).filter((n) => n.severity === "minor");
 
   const byProfile = new Map<string, UserNotification[]>();
   for (const n of notifs) {

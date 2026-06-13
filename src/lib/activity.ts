@@ -32,9 +32,9 @@ export function nextScore(
   if (changeCount > 0) {
     return Math.min(100, current + BUMP_PER_CHANGE * Math.min(changeCount, 3));
   }
-  const elapsedDays = lastCheckedAt
-    ? (Date.now() - new Date(lastCheckedAt).getTime()) / 86_400_000
-    : 1;
+  const ms = lastCheckedAt ? new Date(lastCheckedAt).getTime() : NaN;
+  // last_checked_at null/vide/corrompu (NaN) → 1 jour par défaut (jamais de NaN propagé).
+  const elapsedDays = Number.isFinite(ms) ? (Date.now() - ms) / 86_400_000 : 1;
   const decay = Math.max(1, Math.round(DECAY_PER_DAY * elapsedDays));
   return Math.max(0, current - decay);
 }
