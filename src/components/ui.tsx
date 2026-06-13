@@ -111,25 +111,24 @@ const TABS = [
 ];
 
 function useUnseenFlips() {
-  const [count, setCount] = useState(0);
+  const [fetched, setFetched] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname === "/notifications") {
-      setCount(0);
-      return;
-    }
+    // Sur la page Flips elle-même : pas de fetch (le badge y est dérivé à 0 ci-dessous).
+    if (pathname === "/notifications") return;
     // /api/changes ne marque PAS vu (contrairement à /api/notifications)
     fetch("/api/changes")
       .then((r) => r.json())
       .then((d) => {
         const unseen = (d.changes ?? []).filter((f: UserNotification) => !f.seen).length;
-        setCount(unseen);
+        setFetched(unseen);
       })
       .catch(() => {});
   }, [pathname]);
 
-  return count;
+  // Valeur dérivée : sur /notifications le compteur est à 0, sinon le dernier fetch.
+  return pathname === "/notifications" ? 0 : fetched;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {

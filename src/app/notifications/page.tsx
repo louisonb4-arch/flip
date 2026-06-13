@@ -63,6 +63,8 @@ export default function FlipsPage() {
   }, [filter]);
 
   useEffect(() => {
+    // Chargement initial : effet réseau légitime (setState arrive après await), pas un état dérivé.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 

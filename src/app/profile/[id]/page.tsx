@@ -22,6 +22,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   }, [id]);
 
   useEffect(() => {
+    // Chargement initial : effet réseau légitime (setData arrive après await), pas un état dérivé.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
