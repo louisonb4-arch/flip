@@ -5,10 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const NOTICES: Record<string, string> = {
+  unconfirmed: "Confirme d'abord ton email. On t'a envoyé un lien — vérifie ta boîte (et les spams).",
+  auth: "Lien expiré ou invalide. Reconnecte-toi.",
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
+  const notice = NOTICES[searchParams.get("error") ?? ""] ?? null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,10 +29,13 @@ function LoginForm() {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
+        const msg = error.message;
         setError(
-          error.message === "Invalid login credentials"
+          msg === "Invalid login credentials"
             ? "Email ou mot de passe incorrect."
-            : error.message,
+            : msg === "Email not confirmed"
+              ? "Email pas encore confirmé. Clique sur le lien reçu par mail pour activer ton compte."
+              : msg,
         );
       } else {
         router.push(next);
@@ -39,6 +48,11 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleLogin} className="space-y-3">
+      {notice && (
+        <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+          {notice}
+        </p>
+      )}
       <input
         type="email"
         placeholder="Email"

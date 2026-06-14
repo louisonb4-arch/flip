@@ -126,6 +126,7 @@ export interface User {
   id: string;
   email: string;
   plan: Plan;
+  created_at?: string; // pour le calcul d'accès (période d'essai)
 }
 
 export interface PlanLimit {

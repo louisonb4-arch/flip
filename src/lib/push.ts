@@ -36,9 +36,11 @@ export async function sendFlipPush(userIds: string[], copy: FlipCopy): Promise<n
         );
         sent++;
       } catch (e) {
-        // 404/410 = subscription expirée → ignorer (nettoyage plus tard)
+        // 404/410 = subscription expirée/révoquée → on la supprime de la base (nettoyage).
         const status = (e as { statusCode?: number }).statusCode;
-        if (status !== 404 && status !== 410) {
+        if (status === 404 || status === 410) {
+          if (sub.endpoint) await store.deletePushSubscription(userId, sub.endpoint).catch(() => {});
+        } else {
           console.warn(`[push] échec envoi user ${userId}:`, status);
         }
       }

@@ -12,5 +12,9 @@ export async function getSessionUserId(): Promise<string | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  if (!user) return null;
+  // Email non confirmé → pas d'accès (cohérent avec le middleware). Les routes API
+  // qui appellent getSessionUserId renverront 401 tant que l'email n'est pas vérifié.
+  if (!user.email_confirmed_at && !user.confirmed_at) return null;
+  return user.id;
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 const FEATURES = [
   { icon: "🔔", title: "Alertes", sub: "instantanées" },
@@ -13,7 +14,10 @@ const STEPS = [
   { n: 3, icon: "📲", title: "Tu reçois un Flip", sub: "dès que ça bouge" },
 ];
 
-export default function Landing() {
+export default async function Landing() {
+  // Lien d'invitation : le code reste en cookie (posé par /invite/[code]) → on adapte le CTA.
+  const invited = (await cookies()).get("flip_ref")?.value ?? null;
+
   return (
     <main className="relative overflow-hidden">
       <div className="flip-blob left-[-10%] top-[10%] h-72 w-72 bg-flip-pink" />
@@ -25,18 +29,24 @@ export default function Landing() {
             Flip<span className="flip-gradient-text">.</span>
           </span>
           <Link
-            href="/dashboard"
-            className="flip-gradient rounded-full px-5 py-2 text-sm font-bold text-white shadow-lg shadow-pink-200 transition hover:scale-105"
+            href="/auth/login"
+            className="rounded-full border border-pink-100 px-5 py-2 text-sm font-bold text-flip-pink transition hover:border-flip-pink"
           >
-            Ouvrir l&apos;app
+            Connexion
           </Link>
         </header>
 
         {/* hero */}
         <section className="mt-20 text-center">
-          <p className="mx-auto mb-4 w-fit rounded-full bg-flip-soft px-4 py-1.5 text-sm font-semibold text-flip-pink">
-            ⚡ Ne rate aucun update
-          </p>
+          {invited ? (
+            <p className="mx-auto mb-4 w-fit rounded-full bg-flip-soft px-4 py-1.5 text-sm font-semibold text-flip-pink">
+              🎁 Tu as été invité — 3 jours offerts à l&apos;inscription
+            </p>
+          ) : (
+            <p className="mx-auto mb-4 w-fit rounded-full bg-flip-soft px-4 py-1.5 text-sm font-semibold text-flip-pink">
+              ⚡ Ne rate aucun update
+            </p>
+          )}
           <h1 className="text-5xl font-extrabold leading-tight tracking-tight sm:text-6xl">
             Ton crush change sa bio&nbsp;?
             <br />
@@ -47,7 +57,7 @@ export default function Landing() {
             lien — dès que ça bouge, tu reçois une alerte.
           </p>
           <Link
-            href="/dashboard"
+            href="/auth/signup"
             className="flip-gradient mt-8 inline-block rounded-full px-8 py-4 text-lg font-bold text-white shadow-xl shadow-pink-200 transition hover:scale-105"
           >
             Ajouter un profil →
@@ -143,7 +153,7 @@ export default function Landing() {
                 <li>🔔 Alertes de base</li>
               </ul>
               <Link
-                href="/dashboard"
+                href="/auth/signup"
                 className="mt-7 rounded-full border border-gray-200 py-3 text-center text-sm font-bold text-gray-600 transition hover:border-flip-pink hover:text-flip-pink"
               >
                 Commencer
@@ -169,7 +179,7 @@ export default function Landing() {
                 <li>⏱️ Notifications instantanées</li>
               </ul>
               <Link
-                href="/dashboard"
+                href="/auth/signup"
                 className="flip-gradient mt-7 rounded-full py-3 text-center text-sm font-bold text-white shadow-lg shadow-pink-200 transition hover:scale-105"
               >
                 Passer Flip Plus
@@ -196,7 +206,7 @@ export default function Landing() {
                 <li>🆕 Accès anticipé aux nouvelles plateformes</li>
               </ul>
               <Link
-                href="/dashboard"
+                href="/auth/signup"
                 className="mt-7 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 py-3 text-center text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:scale-105"
               >
                 Passer Flip Ultra

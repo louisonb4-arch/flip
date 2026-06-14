@@ -8,6 +8,9 @@ export const MILESTONES = [
 
 export const MAX_BONUS_DAYS = 30;
 
+// Jours offerts au FILLEUL qui s'inscrit via un lien de parrainage.
+export const REFERRED_SIGNUP_BONUS_DAYS = 3;
+
 export interface ReferralReward {
   milestone: number;
   reward_days: number;
@@ -72,7 +75,10 @@ export async function applyReferralCode(
   const result = await store.addReferral(referrerId, referredUserId);
   if (!result.ok) return result;
 
-  // 4. Vérifier et débloquer les paliers
+  // 4. Le FILLEUL reçoit ses jours gratuits (idempotent par source → pas de double crédit au refresh).
+  await store.grantBonusDays(referredUserId, REFERRED_SIGNUP_BONUS_DAYS, "referral_signup");
+
+  // 5. Vérifier et débloquer les paliers du PARRAIN
   const count = await store.getReferralCount(referrerId);
   for (const m of MILESTONES) {
     if (count >= m.count) {

@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/ui";
 import { MILESTONES, MAX_BONUS_DAYS } from "@/lib/referrals";
 import type { ReferralData } from "@/lib/referrals";
+import type { AccessStatus } from "@/lib/access";
+
+type ReferralPayload = ReferralData & { access?: AccessStatus };
 
 // ---------- Milestone card ----------
 
@@ -108,7 +111,7 @@ function MilestoneCard({
 // ---------- Main page ----------
 
 export default function ReferralsPage() {
-  const [data, setData] = useState<ReferralData | null>(null);
+  const [data, setData] = useState<ReferralPayload | null>(null);
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
 
@@ -174,6 +177,24 @@ export default function ReferralsPage() {
           <span>Inviter</span>
         </button>
       </div>
+
+      {/* Accès / essai (calculé côté serveur) */}
+      {data?.access && (
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-pink-100 bg-flip-soft px-4 py-3">
+          <span className="text-2xl">{data.access.hasAccess ? "✨" : "🔒"}</span>
+          <div>
+            <p className="text-sm font-extrabold text-flip-ink">
+              {data.access.hasAccess
+                ? `${data.access.daysLeft} jour${data.access.daysLeft > 1 ? "s" : ""} d'accès restants`
+                : "Période d'essai terminée"}
+            </p>
+            <p className="text-xs text-gray-400">
+              Essai {data.access.trialDays} j
+              {data.access.bonusDays > 0 ? ` + ${data.access.bonusDays} j bonus` : ""} · parraine pour gagner plus.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Total bonus */}
       {totalBonusDays > 0 && (

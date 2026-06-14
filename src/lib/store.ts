@@ -71,6 +71,7 @@ export interface Store {
 
   // push subscriptions (web push)
   savePushSubscription(userId: string, subscription: PushSubscriptionJSON): Promise<void>;
+  deletePushSubscription(userId: string, endpoint: string): Promise<void>;
   getPushSubscriptions(userId: string): Promise<PushSubscriptionJSON[]>;
 
   // referrals
@@ -83,12 +84,19 @@ export interface Store {
   unlockMilestone(userId: string, milestone: number, rewardDays: number): Promise<void>;
   // Marque un palier comme réclamé. Renvoie false si déjà réclamé ou non débloqué (idempotent).
   claimMilestone(userId: string, milestone: number): Promise<{ ok: boolean; reward_days?: number }>;
+  // Crédite des jours bonus (ledger user_bonus_days). Idempotent par (user, source).
+  grantBonusDays(userId: string, days: number, source: string): Promise<void>;
   getTotalBonusDays(userId: string): Promise<number>;
 }
 
 // ---------------- DevStore (JSON local, multi-user supporté) ----------------
 
-const DEV_USER: User = { id: "demo-user", email: "demo@flip.app", plan: "flip_mini" };
+const DEV_USER: User = {
+  id: "demo-user",
+  email: "demo@flip.app",
+  plan: "flip_mini",
+  created_at: "2026-06-01T00:00:00.000Z",
+};
 
 interface DevNotif {
   id: string;
@@ -112,6 +120,7 @@ interface DevDb {
   referralCodes: { user_id: string; code: string }[];
   referrals: { referrer_user_id: string; referred_user_id: string }[];
   referralRewards: { user_id: string; milestone: number; reward_days: number; unlocked_at: string; claimed_at: string | null }[];
+  userBonusDays: { user_id: string; total_days: number; source: string; created_at: string }[];
 }
 
 const DEFAULT_SETTINGS = (userId: string): NotificationSettings => ({
@@ -148,6 +157,7 @@ class DevStore implements Store {
         referralCodes: [],
         referrals: [],
         referralRewards: [],
+        userBonusDays: [],
       };
     }
     return this.db!;
@@ -160,7 +170,14 @@ class DevStore implements Store {
 
   async getUser(userId: string) {
     const db = await this.load();
-    return db.users.find((u) => u.id === userId) ?? { id: userId, email: `${userId}@flip.app`, plan: "flip_mini" };
+    return (
+      db.users.find((u) => u.id === userId) ?? {
+        id: userId,
+        email: `${userId}@flip.app`,
+        plan: "flip_mini" as const,
+        created_at: new Date().toISOString(),
+      }
+    );
   }
   async setPlan(userId: string, plan: User["plan"]) {
     const db = await this.load();
@@ -424,6 +441,14 @@ class DevStore implements Store {
     if (!db.pushSubscriptions) return [];
     return db.pushSubscriptions.filter((s) => s.user_id === userId).map((s) => s.subscription);
   }
+  async deletePushSubscription(userId: string, endpoint: string) {
+    const db = await this.load();
+    if (!db.pushSubscriptions) return;
+    db.pushSubscriptions = db.pushSubscriptions.filter(
+      (s) => !(s.user_id === userId && s.subscription.endpoint === endpoint),
+    );
+    await this.save();
+  }
 
   async getReferralCode(userId: string) {
     const db = await this.load();
@@ -472,6 +497,8 @@ class DevStore implements Store {
         claimed_at: null,
       });
       await this.save();
+      // Crédite le ledger bonus (canonique pour le calcul d'accès).
+      await this.grantBonusDays(userId, rewardDays, `referral_milestone_${milestone}`);
     }
   }
   async claimMilestone(userId: string, milestone: number) {
@@ -485,11 +512,24 @@ class DevStore implements Store {
     await this.save();
     return { ok: true, reward_days: reward.reward_days };
   }
+  async grantBonusDays(userId: string, days: number, source: string) {
+    const db = await this.load();
+    if (!db.userBonusDays) db.userBonusDays = [];
+    // Idempotent par (user, source) : un même évènement ne crédite jamais deux fois.
+    if (db.userBonusDays.find((b) => b.user_id === userId && b.source === source)) return;
+    db.userBonusDays.push({
+      user_id: userId,
+      total_days: days,
+      source,
+      created_at: new Date().toISOString(),
+    });
+    await this.save();
+  }
   async getTotalBonusDays(userId: string) {
     const db = await this.load();
-    return (db.referralRewards ?? [])
-      .filter((r) => r.user_id === userId)
-      .reduce((sum, r) => sum + r.reward_days, 0);
+    return (db.userBonusDays ?? [])
+      .filter((b) => b.user_id === userId)
+      .reduce((sum, b) => sum + b.total_days, 0);
   }
 }
 
@@ -794,6 +834,10 @@ class SupabaseStore implements Store {
     const { data } = await sb.from("push_subscriptions").select("subscription").eq("user_id", userId);
     return (data ?? []).map((r: { subscription: string }) => JSON.parse(r.subscription) as PushSubscriptionJSON);
   }
+  async deletePushSubscription(userId: string, endpoint: string) {
+    const sb = await this.client();
+    await sb.from("push_subscriptions").delete().eq("user_id", userId).eq("endpoint", endpoint);
+  }
 
   async getReferralCode(userId: string) {
     const sb = await this.client();
@@ -844,17 +888,19 @@ class SupabaseStore implements Store {
         { user_id: userId, milestone, reward_days: rewardDays, unlocked_at: new Date().toISOString() },
         { onConflict: "user_id,milestone", ignoreDuplicates: true },
       );
-    // Ajoute un enregistrement bonus si nouveau palier
+    // Crédite le ledger bonus (idempotent par source).
+    await this.grantBonusDays(userId, rewardDays, `referral_milestone_${milestone}`);
+  }
+  async grantBonusDays(userId: string, days: number, source: string) {
+    const sb = await this.client();
+    // Idempotent par (user, source) : un même évènement ne crédite jamais deux fois.
     const { count } = await sb
       .from("user_bonus_days")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("source", `referral_milestone_${milestone}`);
-    if ((count ?? 0) === 0) {
-      await sb
-        .from("user_bonus_days")
-        .insert({ user_id: userId, total_days: rewardDays, source: `referral_milestone_${milestone}` });
-    }
+      .eq("source", source);
+    if ((count ?? 0) > 0) return;
+    await sb.from("user_bonus_days").insert({ user_id: userId, total_days: days, source });
   }
   async claimMilestone(userId: string, milestone: number) {
     const sb = await this.client();
@@ -874,8 +920,9 @@ class SupabaseStore implements Store {
   }
   async getTotalBonusDays(userId: string) {
     const sb = await this.client();
-    const { data } = await sb.from("referral_rewards").select("reward_days").eq("user_id", userId);
-    return (data ?? []).reduce((s: number, r: { reward_days: number }) => s + r.reward_days, 0);
+    // Ledger canonique : referral_rewards (paliers parrain) + bonus signup filleul y sont tous écrits.
+    const { data } = await sb.from("user_bonus_days").select("total_days").eq("user_id", userId);
+    return (data ?? []).reduce((s: number, r: { total_days: number }) => s + r.total_days, 0);
   }
 }
 

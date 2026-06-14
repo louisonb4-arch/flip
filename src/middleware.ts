@@ -37,6 +37,9 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isProtected = PROTECTED.some((p) => path.startsWith(p));
+  // Email confirmé ? (defense-in-depth : même si une session existe, on bloque l'accès complet
+  // tant que l'email n'est pas vérifié. La vraie barrière reste le réglage Supabase "Confirm email".)
+  const emailConfirmed = !!(user?.email_confirmed_at || user?.confirmed_at);
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone();
@@ -45,9 +48,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Déjà connecté → pas besoin des pages auth
+  // Session présente mais email NON confirmé → pas d'accès aux pages protégées.
+  if (isProtected && user && !emailConfirmed) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    url.searchParams.set("error", "unconfirmed");
+    return NextResponse.redirect(url);
+  }
+
+  // Déjà connecté ET confirmé → pas besoin des pages auth, on envoie au dashboard.
   if (path.startsWith("/auth/login") || path.startsWith("/auth/signup")) {
-    if (user) {
+    if (user && emailConfirmed) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
