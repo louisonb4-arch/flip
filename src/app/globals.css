@@ -43,3 +43,12 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop { animation: flip-pop 0.25s ease-out both; }
+
+/* prose pages légales */
+.legal-prose h2 { margin-top: 1.75rem; font-size: 1.05rem; font-weight: 800; color: #1f2937; }
+.legal-prose h3 { margin-top: 1rem; font-size: 0.95rem; font-weight: 700; color: #374151; }
+.legal-prose p { margin-top: 0.5rem; }
+.legal-prose ul { margin-top: 0.5rem; padding-left: 1.1rem; list-style: disc; }
+.legal-prose li { margin-top: 0.25rem; }
+.legal-prose a { color: #ff2d78; font-weight: 600; }
+.legal-prose strong { color: #374151; font-weight: 700; }

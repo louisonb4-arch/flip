@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { LegalLinks } from "@/components/legal";
 
 const NOTICES: Record<string, string> = {
   unconfirmed: "Confirme d'abord ton email. On t'a envoyé un lien — vérifie ta boîte (et les spams).",
@@ -104,6 +105,7 @@ export default function LoginPage() {
             Créer un compte
           </Link>
         </p>
+        <LegalLinks className="mt-8" />
       </div>
     </main>
   );

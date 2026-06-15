@@ -87,6 +87,9 @@ export interface Store {
   // Crédite des jours bonus (ledger user_bonus_days). Idempotent par (user, source).
   grantBonusDays(userId: string, days: number, source: string): Promise<void>;
   getTotalBonusDays(userId: string): Promise<number>;
+
+  // RGPD : supprime toutes les données rattachées à l'utilisateur (hors compte Auth).
+  deleteUserData(userId: string): Promise<void>;
 }
 
 // ---------------- DevStore (JSON local, multi-user supporté) ----------------
@@ -531,6 +534,31 @@ class DevStore implements Store {
       .filter((b) => b.user_id === userId)
       .reduce((sum, b) => sum + b.total_days, 0);
   }
+
+  async deleteUserData(userId: string) {
+    const db = await this.load();
+    // profils suivis par l'utilisateur → purge + nettoyage des profils globaux orphelins
+    const affected = db.tracked.filter((t) => t.user_id === userId).map((t) => t.platform_profile_id);
+    db.tracked = db.tracked.filter((t) => t.user_id !== userId);
+    for (const ppId of affected) {
+      if (!db.tracked.some((t) => t.platform_profile_id === ppId)) {
+        db.platformProfiles = db.platformProfiles.filter((p) => p.id !== ppId);
+        db.snapshots = db.snapshots.filter((s) => s.platform_profile_id !== ppId);
+        db.changes = db.changes.filter((c) => c.platform_profile_id !== ppId);
+      }
+    }
+    db.notifications = db.notifications.filter((n) => n.user_id !== userId);
+    db.pushSubscriptions = db.pushSubscriptions.filter((s) => s.user_id !== userId);
+    db.settings = db.settings.filter((s) => s.user_id !== userId);
+    db.referralCodes = db.referralCodes.filter((r) => r.user_id !== userId);
+    db.referrals = db.referrals.filter(
+      (r) => r.referrer_user_id !== userId && r.referred_user_id !== userId,
+    );
+    db.referralRewards = (db.referralRewards ?? []).filter((r) => r.user_id !== userId);
+    db.userBonusDays = (db.userBonusDays ?? []).filter((b) => b.user_id !== userId);
+    db.users = db.users.filter((u) => u.id !== userId);
+    await this.save();
+  }
 }
 
 // ---------------- SupabaseStore (production) ----------------
@@ -923,6 +951,45 @@ class SupabaseStore implements Store {
     // Ledger canonique : referral_rewards (paliers parrain) + bonus signup filleul y sont tous écrits.
     const { data } = await sb.from("user_bonus_days").select("total_days").eq("user_id", userId);
     return (data ?? []).reduce((s: number, r: { total_days: number }) => s + r.total_days, 0);
+  }
+
+  async deleteUserData(userId: string) {
+    const sb = await this.client();
+    // profils suivis → on les retient pour purger ensuite les profils globaux orphelins
+    const { data: tracked } = await sb
+      .from("user_tracked_profiles")
+      .select("platform_profile_id")
+      .eq("user_id", userId);
+    const affected = (tracked ?? []).map(
+      (t: { platform_profile_id: string }) => t.platform_profile_id,
+    );
+
+    // purge de toutes les données rattachées à l'utilisateur
+    await sb.from("user_tracked_profiles").delete().eq("user_id", userId);
+    await sb.from("user_notifications").delete().eq("user_id", userId);
+    await sb.from("push_subscriptions").delete().eq("user_id", userId);
+    await sb.from("notification_settings").delete().eq("user_id", userId);
+    await sb.from("referral_codes").delete().eq("user_id", userId);
+    await sb.from("referral_rewards").delete().eq("user_id", userId);
+    await sb.from("user_bonus_days").delete().eq("user_id", userId);
+    await sb
+      .from("referrals")
+      .delete()
+      .or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`);
+
+    // profils globaux désormais sans aucun abonné → purge (données publiques mutualisées)
+    for (const ppId of affected) {
+      const { count } = await sb
+        .from("user_tracked_profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("platform_profile_id", ppId);
+      if ((count ?? 0) === 0) {
+        await sb.from("platform_profiles").delete().eq("id", ppId);
+      }
+    }
+
+    // ligne applicative de l'utilisateur (le compte Auth est supprimé côté route)
+    await sb.from("users").delete().eq("id", userId);
   }
 }
 

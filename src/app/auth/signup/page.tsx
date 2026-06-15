@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { LegalLinks } from "@/components/legal";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -98,7 +99,15 @@ export default function SignupPage() {
         </form>
 
         <p className="mt-3 text-center text-xs text-gray-400">
-          En créant un compte, tu acceptes que Flip suit uniquement des informations publiques.
+          En créant un compte (réservé aux 15 ans et plus), tu acceptes les{" "}
+          <Link href="/terms" className="font-semibold text-flip-pink">
+            CGU
+          </Link>{" "}
+          et la{" "}
+          <Link href="/privacy" className="font-semibold text-flip-pink">
+            politique de confidentialité
+          </Link>
+          . Flip suit uniquement des informations publiques.
         </p>
 
         <p className="mt-6 text-center text-sm text-gray-400">
@@ -107,6 +116,8 @@ export default function SignupPage() {
             Se connecter
           </Link>
         </p>
+
+        <LegalLinks className="mt-8" />
       </div>
     </main>
   );

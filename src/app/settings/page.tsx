@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell, enablePushSubscription, sendTestPush } from "@/components/ui";
+import { LegalLinks } from "@/components/legal";
+import { createClient } from "@/lib/supabase/client";
 import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/lib/types";
 
 const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
@@ -27,6 +29,9 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [testMsg, setTestMsg] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -60,6 +65,37 @@ export default function SettingsPage() {
     const d = await res.json();
     setSettings(d.settings);
     setUser(d.user);
+  }
+
+  async function deleteAccount() {
+    if (confirmDelete.trim().toUpperCase() !== "SUPPRIMER") return;
+    if (
+      !window.confirm(
+        "Dernière confirmation : supprimer définitivement ton compte et toutes tes données ? Cette action est irréversible.",
+      )
+    )
+      return;
+    setDeleting(true);
+    setDelErr(null);
+    try {
+      const res = await fetch("/api/account/delete", { method: "POST" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setDelErr(d.error ?? "La suppression a échoué. Réessaie.");
+        setDeleting(false);
+        return;
+      }
+      // déconnexion navigateur (best-effort) puis redirection vers la confirmation
+      try {
+        if (process.env.NEXT_PUBLIC_SUPABASE_URL) await createClient().auth.signOut();
+      } catch {
+        // ignore
+      }
+      window.location.href = "/goodbye";
+    } catch {
+      setDelErr("Erreur réseau. Réessaie.");
+      setDeleting(false);
+    }
   }
 
   const current = user?.plan;
@@ -164,6 +200,37 @@ export default function SettingsPage() {
       <p className="mt-6 text-center text-xs text-gray-400">
         Flip suit uniquement des infos publiques. Jamais de mot de passe Instagram.
       </p>
+
+      {/* Zone de danger — suppression de compte (RGPD) */}
+      <h2 className="mt-10 text-lg font-extrabold text-red-600">Zone de danger</h2>
+      <div className="mt-3 rounded-2xl border border-red-200 bg-red-50/60 p-6">
+        <p className="text-sm font-bold text-red-700">Supprimer mon compte</p>
+        <p className="mt-1 text-xs leading-relaxed text-red-600/80">
+          Supprime définitivement ton compte et toutes tes données : comptes suivis, notifications,
+          abonnements push, parrainage et jours bonus. Cette action est <strong>irréversible</strong>.
+        </p>
+        <label className="mt-4 block text-xs font-semibold text-red-700">
+          Tape <span className="font-mono font-bold">SUPPRIMER</span> pour confirmer
+        </label>
+        <input
+          value={confirmDelete}
+          onChange={(e) => setConfirmDelete(e.target.value)}
+          placeholder="SUPPRIMER"
+          className="mt-1.5 w-full rounded-xl border border-red-200 bg-white px-4 py-3 text-sm outline-none focus:border-red-500"
+        />
+        {delErr && <p className="mt-2 text-xs font-medium text-red-600">{delErr}</p>}
+        <button
+          onClick={deleteAccount}
+          disabled={deleting || confirmDelete.trim().toUpperCase() !== "SUPPRIMER"}
+          className="mt-3 w-full rounded-full bg-red-600 py-3.5 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {deleting ? "Suppression…" : "Supprimer définitivement mon compte"}
+        </button>
+      </div>
+
+      <div className="mt-10 border-t border-gray-100 pt-6">
+        <LegalLinks />
+      </div>
     </AppShell>
   );
 }

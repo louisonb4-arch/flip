@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { LegalLinks } from "@/components/legal";
 
 const FEATURES = [
   { icon: "🔔", title: "Alertes", sub: "instantanées" },
@@ -241,8 +242,9 @@ export default async function Landing() {
         </section>
 
         <footer className="mt-20 text-center text-xs text-gray-400">
-          Flip suit uniquement des informations publiques observables. Pas affilié aux plateformes
-          surveillées.
+          Flip suit uniquement des informations publiques observables sur Instagram. Pas affilié à
+          Instagram ni à Meta.
+          <LegalLinks className="mt-4" />
         </footer>
       </div>
     </main>
