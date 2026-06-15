@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell, FlipRow, EmptyState } from "@/components/ui";
+import { AppShell, FlipRow, EmptyState, PushPrompt } from "@/components/ui";
 import { DigestCard } from "@/components/digest";
 import type { UserNotification } from "@/lib/types";
 
@@ -87,6 +87,8 @@ export default function FlipsPage() {
             : `${total} Flip${total > 1 ? "s" : ""} reçu${total > 1 ? "s" : ""}`}
       </p>
 
+      <PushPrompt />
+
       <div className="mt-5">
         <DigestCard />
       </div>
@@ -118,8 +120,8 @@ export default function FlipsPage() {
       {flips !== null && total === 0 && (
         <div className="mt-5">
           <EmptyState
-            title="Aucun Flip aujourd'hui"
-            sub="Suis des profils, on t'envoie un Flip dès que ça bouge."
+            title="Aucun Flip pour l'instant"
+            sub="Suis des profils, on t'envoie un Flip quand l'un d'eux change."
           />
         </div>
       )}

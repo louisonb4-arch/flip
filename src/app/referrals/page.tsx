@@ -148,7 +148,7 @@ export default function ReferralsPage() {
     if (navigator.share) {
       await navigator.share({
         title: "Rejoins-moi sur Flip !",
-        text: "Suis les changements de profils Instagram en temps réel avec Flip.",
+        text: "Suis les changements de profils Instagram publics avec Flip.",
         url: data.link,
       }).catch(() => {});
     } else {

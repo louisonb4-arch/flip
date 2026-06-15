@@ -97,6 +97,73 @@ export async function sendTestPush(): Promise<string> {
   return "Aucun appareil abonné.";
 }
 
+// Bannière d'activation push : visible tant que push_enabled = false.
+// Sans alertes activées, l'utilisateur ne reçoit aucun Flip → on le guide.
+export function PushPrompt() {
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive) setShow(!d?.settings?.push_enabled);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!show) return null;
+
+  async function enable() {
+    setBusy(true);
+    setMsg(null);
+    const state = await enablePushSubscription();
+    if (state === "denied") {
+      setMsg(
+        "Notifications bloquées par ton navigateur. Autorise-les dans les réglages du site (iPhone : Réglages → Notifications → Flip).",
+      );
+      setBusy(false);
+      return;
+    }
+    if (state === "unsupported") {
+      setMsg(
+        "Sur iPhone, ajoute d'abord Flip à l'écran d'accueil (Partager → Sur l'écran d'accueil), puis réessaie.",
+      );
+      setBusy(false);
+      return;
+    }
+    await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ push_enabled: true }),
+    }).catch(() => {});
+    setShow(false);
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-pink-100 bg-flip-soft p-4">
+      <p className="text-sm font-extrabold text-flip-pink">🔔 Active les alertes</p>
+      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+        Sans alertes activées, tu ne reçois pas tes Flips. Active-les pour être prévenu quand un
+        profil suivi change.
+      </p>
+      {msg && <p className="mt-2 text-xs font-medium text-gray-600">{msg}</p>}
+      <button
+        onClick={enable}
+        disabled={busy}
+        className="flip-gradient mt-3 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-pink-200 transition hover:scale-105 disabled:opacity-40"
+      >
+        {busy ? "…" : "Activer les alertes"}
+      </button>
+    </div>
+  );
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");

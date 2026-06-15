@@ -3,16 +3,16 @@ import { cookies } from "next/headers";
 import { LegalLinks } from "@/components/legal";
 
 const FEATURES = [
-  { icon: "🔔", title: "Alertes", sub: "instantanées" },
+  { icon: "🔔", title: "Alertes", sub: "quand ça change" },
   { icon: "🕐", title: "Historique", sub: "complet" },
-  { icon: "📈", title: "Suivi avancé", sub: "abonnés, posts" },
-  { icon: "🛡️", title: "100% privé", sub: "et sécurisé" },
+  { icon: "📈", title: "Suivi", sub: "abonnés, posts" },
+  { icon: "🛡️", title: "Infos", sub: "publiques only" },
 ];
 
 const STEPS = [
-  { n: 1, icon: "➕", title: "Ajoute un profil", sub: "en 2 secondes" },
-  { n: 2, icon: "⚡", title: "On surveille", sub: "les changements" },
-  { n: 3, icon: "📲", title: "Tu reçois un Flip", sub: "dès que ça bouge" },
+  { n: 1, icon: "➕", title: "Ajoute un @", sub: "Instagram public" },
+  { n: 2, icon: "🔁", title: "Flip vérifie", sub: "régulièrement" },
+  { n: 3, icon: "📲", title: "Tu reçois un Flip", sub: "quand un profil change" },
 ];
 
 export default async function Landing() {
@@ -55,7 +55,7 @@ export default async function Landing() {
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-gray-500">
             Suis n&apos;importe quel profil Instagram <strong>public</strong>. Bio, photo, nom,
-            lien — dès que ça bouge, tu reçois une alerte.
+            lien, abonnés, posts — Flip te prévient quand quelque chose change.
           </p>
           <Link
             href="/auth/signup"
@@ -167,17 +167,17 @@ export default async function Landing() {
                 ⭐ POPULAIRE
               </span>
               <h3 className="font-bold text-flip-pink">Flip Plus</h3>
-              <p className="mt-1 text-xs text-gray-400">Surveillance renforcée.</p>
+              <p className="mt-1 text-xs text-gray-400">Vérification plus fréquente.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 4,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>15 profils</strong> Instagram</li>
-                <li>⚡ <strong>Surveillance renforcée</strong></li>
+                <li>🔁 <strong>Vérification plus fréquente</strong></li>
                 <li>📚 Historique complet</li>
-                <li>🚀 Alertes prioritaires</li>
+                <li>🚀 Profils vérifiés en priorité</li>
                 <li>🔀 Comparaison Avant / Après</li>
-                <li>⏱️ Notifications instantanées</li>
+                <li>🔔 Alertes à chaque changement</li>
               </ul>
               <Link
                 href="/auth/signup"
@@ -193,14 +193,14 @@ export default async function Landing() {
                 ✨ Multi-plateformes
               </span>
               <h3 className="font-bold text-indigo-500">Flip Ultra</h3>
-              <p className="mt-1 text-xs text-gray-400">Surveillance prioritaire.</p>
+              <p className="mt-1 text-xs text-gray-400">Vérification prioritaire.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 9,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>25 profils</strong> Instagram</li>
                 <li className="font-semibold text-indigo-600">🎵 <strong>+ 10 profils</strong> TikTok</li>
-                <li>⚡ <strong>Surveillance prioritaire</strong></li>
+                <li>🔁 <strong>Vérification prioritaire</strong></li>
                 <li>📚 Historique complet</li>
                 <li>📬 Digest hebdomadaire</li>
                 <li>📈 Suivi avancé followers / posts</li>
@@ -235,7 +235,7 @@ export default async function Landing() {
               ))}
             </div>
             <p className="mx-auto mt-4 max-w-md text-xs text-gray-400">
-              Flip surveille les changements publics sur internet. Instagram n&apos;est que la première
+              Flip suit les changements publics observables. Instagram n&apos;est que la première
               plateforme.
             </p>
           </div>

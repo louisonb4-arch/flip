@@ -106,7 +106,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       <h2 className="mt-8 text-lg font-extrabold">Derniers Flips · AVANT / APRÈS</h2>
       <div className="flip-card mt-3 divide-y divide-gray-50">
         {data.changes.length === 0 ? (
-          <EmptyState title="Aucun Flip détecté" sub="Flip surveille. Dès que ça bouge, c'est ici." />
+          <EmptyState title="Aucun Flip pour l'instant" sub="Flip vérifie ce profil régulièrement. Dès qu'il change, c'est ici." />
         ) : (
           data.changes.map((c) => <FlipRow key={c.id} flip={c} showUser={false} />)
         )}

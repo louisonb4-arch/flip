@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell, EmptyState, timeAgo } from "@/components/ui";
+import { AppShell, EmptyState, PushPrompt, timeAgo } from "@/components/ui";
 import { PLAN_LABELS, type User, type UserTrackedProfile } from "@/lib/types";
 
 interface Data {
@@ -93,6 +93,9 @@ export default function Dashboard() {
           )}
         </p>
       )}
+
+      {/* activation des alertes push */}
+      <PushPrompt />
 
       {/* parrainage banner */}
       <Link
