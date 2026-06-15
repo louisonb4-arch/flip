@@ -43,6 +43,15 @@ export function canonicalPhotoKey(url: string | null | undefined): string | null
   }
 }
 
+// Plancher anti-bruit pour les compteurs (followers / following) :
+// en dessous, on ne crée NI change NI notification → évite les faux "Flip" +1/-1.
+// Significatif = delta absolu >= 3 OU variation >= 1%.
+const COUNT_NOISE_ABS = 3;
+const COUNT_NOISE_PCT = 0.01;
+function isSignificantCount(from: number, delta: number): boolean {
+  return Math.abs(delta) >= COUNT_NOISE_ABS || (from > 0 && Math.abs(delta) / from >= COUNT_NOISE_PCT);
+}
+
 export function diffSnapshots(prev: PublicProfile, next: PublicProfile): DetectedChange[] {
   const changes: DetectedChange[] = [];
 
@@ -73,7 +82,7 @@ export function diffSnapshots(prev: PublicProfile, next: PublicProfile): Detecte
 
   // Abonnés : major si variation significative (>5% OU >50), sinon minor (digest).
   const fc = numericChange(prev.followers_count, next.followers_count);
-  if (fc) {
+  if (fc && isSignificantCount(fc.from, fc.delta)) {
     const significant =
       Math.abs(fc.delta) >= FOLLOWERS_ABS_THRESHOLD ||
       (fc.from > 0 && Math.abs(fc.delta) / fc.from >= FOLLOWERS_PCT_THRESHOLD);
@@ -98,7 +107,7 @@ export function diffSnapshots(prev: PublicProfile, next: PublicProfile): Detecte
 
   // Abonnements : minor (digest seulement).
   const gc = numericChange(prev.following_count, next.following_count);
-  if (gc) {
+  if (gc && isSignificantCount(gc.from, gc.delta)) {
     changes.push({
       change_type: "following",
       severity: "minor",

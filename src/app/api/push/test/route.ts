@@ -36,19 +36,31 @@ export async function POST() {
       url: "/notifications",
     });
 
-    const results = await Promise.allSettled(
-      subscriptions
-        .filter((sub) => !!sub.endpoint)
-        .map((sub) =>
-          webpush.default.sendNotification(
-            sub as Parameters<typeof webpush.default.sendNotification>[0],
-            payload,
-          ),
-        ),
-    );
+    let sent = 0;
+    let removed = 0;
+    for (const sub of subscriptions) {
+      if (!sub.endpoint) continue;
+      try {
+        await webpush.default.sendNotification(
+          sub as Parameters<typeof webpush.default.sendNotification>[0],
+          payload,
+        );
+        sent++;
+      } catch (e) {
+        const status = (e as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 410) {
+          // subscription morte → on la supprime (le client en recrée une au prochain test)
+          await store.deletePushSubscription(userId, sub.endpoint).catch(() => {});
+          removed++;
+          console.warn(`[api/push/test] user=${userId} subscription morte (${status}) supprimée`);
+        } else {
+          console.warn(`[api/push/test] user=${userId} échec (status=${status ?? "?"})`);
+        }
+      }
+    }
 
-    const sent = results.filter((r) => r.status === "fulfilled").length;
-    return NextResponse.json({ sent, total: subscriptions.length });
+    console.log(`[api/push/test] user=${userId} → ${sent} envoyée(s), ${removed} morte(s) nettoyée(s)`);
+    return NextResponse.json({ sent, total: subscriptions.length, removed });
   } catch (e) {
     console.error("[api/push/test]", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

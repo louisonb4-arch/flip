@@ -92,7 +92,9 @@ export async function sendTestPush(): Promise<string> {
   const res = await fetch("/api/push/test", { method: "POST" });
   const d = await res.json().catch(() => ({}));
   if (!res.ok) return d.error ?? "Échec de l'envoi.";
-  return d.sent > 0 ? "Notif envoyée ! Regarde ton écran." : "Aucun appareil abonné.";
+  if (d.sent > 0) return "Notif envoyée ! Regarde ton écran.";
+  if (d.removed > 0) return "Abonnement expiré nettoyé. Réessaie pour t'abonner à nouveau.";
+  return "Aucun appareil abonné.";
 }
 
 function urlBase64ToUint8Array(base64String: string) {
