@@ -29,12 +29,13 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: LEGAL.baseUrl,
     locale: "fr_FR",
-    // image fournie par src/app/opengraph-image.tsx (1200×630)
+    images: ["/apple-touch-icon.png"],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: TITLE,
     description: DESCRIPTION,
+    images: ["/apple-touch-icon.png"],
   },
 };
 
