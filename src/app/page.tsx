@@ -145,7 +145,7 @@ export default async function Landing() {
               <h3 className="font-bold text-gray-500">Flip Mini</h3>
               <p className="mt-1 text-xs text-gray-400">Vérification quotidienne.</p>
               <p className="mt-4 text-4xl font-extrabold">
-                1,99€<span className="text-base font-medium text-gray-400">/mois</span>
+                3,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>3 profils</strong> Instagram</li>
@@ -169,7 +169,7 @@ export default async function Landing() {
               <h3 className="font-bold text-flip-pink">Flip Plus</h3>
               <p className="mt-1 text-xs text-gray-400">Vérification plus fréquente.</p>
               <p className="mt-4 text-4xl font-extrabold">
-                4,99€<span className="text-base font-medium text-gray-400">/mois</span>
+                7,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>15 profils</strong> Instagram</li>
@@ -195,7 +195,7 @@ export default async function Landing() {
               <h3 className="font-bold text-indigo-500">Flip Ultra</h3>
               <p className="mt-1 text-xs text-gray-400">Vérification prioritaire.</p>
               <p className="mt-4 text-4xl font-extrabold">
-                9,99€<span className="text-base font-medium text-gray-400">/mois</span>
+                14,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
                 <li>📸 <strong>25 profils</strong> Instagram</li>
