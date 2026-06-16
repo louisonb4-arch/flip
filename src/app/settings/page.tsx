@@ -8,9 +8,9 @@ import { createClient } from "@/lib/supabase/client";
 import { PLAN_LABELS, type NotificationSettings, type Plan, type User } from "@/lib/types";
 
 const PLAN_CARDS: { plan: Plan; price: string; desc: string }[] = [
-  { plan: "flip_mini", price: "3,99€", desc: "3 profils IG · Vérification quotidienne · historique limité" },
-  { plan: "flip_plus", price: "7,99€", desc: "15 profils IG · Vérification plus fréquente · historique complet" },
-  { plan: "flip_ultra", price: "14,99€", desc: "25 IG + 10 TikTok · Vérification prioritaire · digest hebdo" },
+  { plan: "flip_mini", price: "3,99€", desc: "3 profils Instagram publics · Flip vérifie chaque jour · historique limité" },
+  { plan: "flip_plus", price: "7,99€", desc: "10 profils Instagram publics · vérification plus fréquente · historique complet" },
+  { plan: "flip_ultra", price: "14,99€", desc: "20 profils Instagram publics · vérification prioritaire · historique complet · TikTok bientôt" },
 ];
 
 const TOGGLES: { key: keyof NotificationSettings; label: string; icon: string }[] = [

@@ -143,13 +143,13 @@ export default async function Landing() {
             {/* Flip Mini */}
             <div className="flip-card flex flex-col p-7">
               <h3 className="font-bold text-gray-500">Flip Mini</h3>
-              <p className="mt-1 text-xs text-gray-400">Vérification quotidienne.</p>
+              <p className="mt-1 text-xs text-gray-400">Flip vérifie chaque jour.</p>
               <p className="mt-4 text-4xl font-extrabold">
                 3,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
-                <li>📸 <strong>3 profils</strong> Instagram</li>
-                <li>🕐 <strong>Vérification quotidienne</strong></li>
+                <li>📸 <strong>3 profils</strong> Instagram publics</li>
+                <li>🕐 <strong>Flip vérifie chaque jour</strong></li>
                 <li>📋 20 derniers changements</li>
                 <li>🔔 Alertes de base</li>
               </ul>
@@ -172,12 +172,12 @@ export default async function Landing() {
                 7,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
-                <li>📸 <strong>15 profils</strong> Instagram</li>
+                <li>📸 <strong>10 profils</strong> Instagram publics</li>
                 <li>🔁 <strong>Vérification plus fréquente</strong></li>
                 <li>📚 Historique complet</li>
                 <li>🚀 Profils vérifiés en priorité</li>
                 <li>🔀 Comparaison Avant / Après</li>
-                <li>🔔 Alertes à chaque changement</li>
+                <li>🔔 Alertes détaillées quand Flip détecte un changement</li>
               </ul>
               <Link
                 href="/auth/signup"
@@ -198,8 +198,8 @@ export default async function Landing() {
                 14,99€<span className="text-base font-medium text-gray-400">/mois</span>
               </p>
               <ul className="mt-6 flex-1 space-y-2.5 text-sm text-gray-600">
-                <li>📸 <strong>25 profils</strong> Instagram</li>
-                <li className="font-semibold text-indigo-600">🎵 <strong>+ 10 profils</strong> TikTok</li>
+                <li>📸 <strong>20 profils</strong> Instagram publics</li>
+                <li className="text-gray-400">🎵 <strong>TikTok</strong> — bientôt</li>
                 <li>🔁 <strong>Vérification prioritaire</strong></li>
                 <li>📚 Historique complet</li>
                 <li>📬 Digest hebdomadaire</li>
@@ -239,6 +239,11 @@ export default async function Landing() {
               plateforme.
             </p>
           </div>
+
+          <p className="mx-auto mt-10 max-w-lg text-center text-xs text-gray-400">
+            Flip vérifie périodiquement les changements visibles sur les profils Instagram publics.
+            Certains changements peuvent ne pas être détectés. Non affilié à Instagram.
+          </p>
         </section>
 
         <footer className="mt-20 text-center text-xs text-gray-400">

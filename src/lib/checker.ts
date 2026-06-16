@@ -101,6 +101,13 @@ function planFloorMin(plans: Plan[]): number {
   return Math.min(...plans.map((p) => PLAN_LIMITS[p].checkIntervalMin));
 }
 
+// Rang de priorité par plan (plus petit = checké en premier à intervalle égal).
+// Permet à Ultra de passer avant Plus quand ils partagent le même checkIntervalMin.
+const PLAN_RANK: Record<Plan, number> = { flip_ultra: 0, flip_plus: 1, flip_mini: 2 };
+function planRank(subs: { plan: Plan }[]): number {
+  return Math.min(...subs.map((s) => PLAN_RANK[s.plan]));
+}
+
 function isDue(profile: PlatformProfile, intervalMin: number): boolean {
   if (!profile.last_checked_at) return true;
   const elapsedMin = (Date.now() - new Date(profile.last_checked_at).getTime()) / 60_000;
@@ -129,9 +136,10 @@ export async function checkAllProfiles(): Promise<{
     queue.push({ profile: p, floor, subs });
   }
 
-  // 2. Priorité : meilleur plan (plancher le plus court = Ultra) checké en premier.
-  //    → ressenti "instantané" pour les abonnés premium sans augmenter le volume total.
-  queue.sort((a, b) => a.floor - b.floor);
+  // 2. Priorité : plancher le plus court d'abord ; à intervalle égal, le meilleur plan
+  //    (Ultra > Plus > Mini) passe en premier → "vérification prioritaire" réelle, sans
+  //    augmenter le volume total de checks.
+  queue.sort((a, b) => a.floor - b.floor || planRank(a.subs) - planRank(b.subs));
 
   let fetched = 0;
   let changes = 0;

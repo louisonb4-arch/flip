@@ -138,18 +138,18 @@ export interface PlanLimit {
 
 export const PLAN_LIMITS: Record<Plan, PlanLimit> = {
   flip_mini: {
-    checkIntervalMin: 1440, // 24 h
+    checkIntervalMin: 720, // 12 h
     profilesByPlatform: { instagram: 3 },
     historyFull: false,
   },
   flip_plus: {
-    checkIntervalMin: 360, // 6 h
-    profilesByPlatform: { instagram: 15 },
+    checkIntervalMin: 240, // 4 h
+    profilesByPlatform: { instagram: 10 },
     historyFull: true,
   },
   flip_ultra: {
-    checkIntervalMin: 180, // 3 h
-    profilesByPlatform: { instagram: 25, tiktok: 10 },
+    checkIntervalMin: 240, // 4 h — priorité réelle via tiebreaker de plan (checker.ts)
+    profilesByPlatform: { instagram: 20 },
     historyFull: true,
   },
 };
