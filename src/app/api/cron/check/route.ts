@@ -8,6 +8,15 @@ export const maxDuration = 300;
 // Protégé par CRON_SECRET en production.
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
+
+  // Fail-closed en production : si CRON_SECRET n'est pas configuré, on refuse
+  // d'exécuter le cron (jamais de cron ouvert sur une env mal configurée).
+  if (process.env.NODE_ENV === "production" && !secret) {
+    console.error("[cron] CRON_SECRET absent en production — exécution refusée.");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+
+  // Si un secret est défini, le Bearer est obligatoire (un appel sans secret → 401).
   if (secret) {
     const auth = req.headers.get("authorization");
     if (auth !== `Bearer ${secret}`) {
