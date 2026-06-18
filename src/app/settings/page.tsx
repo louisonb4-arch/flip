@@ -67,6 +67,24 @@ export default function SettingsPage() {
     setUser(d.user);
   }
 
+  async function goCheckout(plan: Plan) {
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+    const d: { url?: string; error?: string } = await res.json().catch(() => ({}));
+    if (d.url) window.location.assign(d.url);
+    else alert(d.error ?? "Paiement indisponible pour le moment.");
+  }
+
+  async function goPortal() {
+    const res = await fetch("/api/stripe/portal", { method: "POST" });
+    const d: { url?: string; error?: string } = await res.json().catch(() => ({}));
+    if (d.url) window.location.assign(d.url);
+    else alert(d.error ?? "Aucun abonnement à gérer.");
+  }
+
   async function deleteAccount() {
     if (confirmDelete.trim().toUpperCase() !== "SUPPRIMER") return;
     if (
@@ -115,7 +133,7 @@ export default function SettingsPage() {
             return (
               <button
                 key={c.plan}
-                onClick={() => !active && patch({ plan: c.plan })}
+                onClick={() => !active && goCheckout(c.plan)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   active
                     ? "border-flip-pink bg-flip-soft"
@@ -135,8 +153,14 @@ export default function SettingsPage() {
             );
           })}
         </div>
-        <p className="mt-3 text-xs text-gray-400">
-          Paiement Stripe branché plus tard — changement de plan en démo.
+        <button
+          onClick={goPortal}
+          className="mt-3 w-full rounded-2xl border border-gray-200 py-3 text-sm font-bold text-gray-600 transition hover:border-flip-pink hover:text-flip-pink"
+        >
+          Gérer mon abonnement
+        </button>
+        <p className="mt-2 text-center text-xs text-gray-400">
+          Paiement sécurisé via Stripe · annulable à tout moment.
         </p>
       </div>
 

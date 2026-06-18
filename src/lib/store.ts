@@ -90,6 +90,22 @@ export interface Store {
 
   // RGPD : supprime toutes les données rattachées à l'utilisateur (hors compte Auth).
   deleteUserData(userId: string): Promise<void>;
+
+  // Stripe / abonnements
+  getSubscription(userId: string): Promise<SubscriptionRecord | null>;
+  getSubscriptionByCustomer(customerId: string): Promise<SubscriptionRecord | null>;
+  upsertSubscription(
+    userId: string,
+    data: { stripe_customer_id?: string; stripe_subscription_id?: string; status?: string; plan?: string },
+  ): Promise<void>;
+}
+
+export interface SubscriptionRecord {
+  user_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  status: string | null;
+  plan: string | null;
 }
 
 // ---------------- DevStore (JSON local, multi-user supporté) ----------------
@@ -559,6 +575,25 @@ class DevStore implements Store {
     db.users = db.users.filter((u) => u.id !== userId);
     await this.save();
   }
+
+  private _subs: SubscriptionRecord[] = [];
+  async getSubscription(userId: string) {
+    return this._subs.find((s) => s.user_id === userId) ?? null;
+  }
+  async getSubscriptionByCustomer(customerId: string) {
+    return this._subs.find((s) => s.stripe_customer_id === customerId) ?? null;
+  }
+  async upsertSubscription(
+    userId: string,
+    data: { stripe_customer_id?: string; stripe_subscription_id?: string; status?: string; plan?: string },
+  ) {
+    let s = this._subs.find((x) => x.user_id === userId);
+    if (!s) {
+      s = { user_id: userId, stripe_customer_id: null, stripe_subscription_id: null, status: null, plan: null };
+      this._subs.push(s);
+    }
+    Object.assign(s, data);
+  }
 }
 
 // ---------------- SupabaseStore (production) ----------------
@@ -990,6 +1025,39 @@ class SupabaseStore implements Store {
 
     // ligne applicative de l'utilisateur (le compte Auth est supprimé côté route)
     await sb.from("users").delete().eq("id", userId);
+  }
+
+  async getSubscription(userId: string) {
+    const sb = await this.client();
+    const { data } = await sb.from("subscriptions").select("*").eq("user_id", userId).limit(1).maybeSingle();
+    return (data as SubscriptionRecord) ?? null;
+  }
+  async getSubscriptionByCustomer(customerId: string) {
+    const sb = await this.client();
+    const { data } = await sb
+      .from("subscriptions")
+      .select("*")
+      .eq("stripe_customer_id", customerId)
+      .limit(1)
+      .maybeSingle();
+    return (data as SubscriptionRecord) ?? null;
+  }
+  async upsertSubscription(
+    userId: string,
+    data: { stripe_customer_id?: string; stripe_subscription_id?: string; status?: string; plan?: string },
+  ) {
+    const sb = await this.client();
+    const { data: existing } = await sb
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    if (existing && (existing as { id: string }).id) {
+      await sb.from("subscriptions").update(data).eq("id", (existing as { id: string }).id);
+    } else {
+      await sb.from("subscriptions").insert({ user_id: userId, ...data });
+    }
   }
 }
 
