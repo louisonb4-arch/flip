@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get("origin") || "https://appflip.online";
 
     const stripe = await getStripe();
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+    const sessionParams = {
+      mode: "subscription" as const,
       line_items: [{ price, quantity: 1 }],
       client_reference_id: userId,
       metadata: { userId, plan },
@@ -42,7 +42,25 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
       success_url: `${origin}/settings?checkout=success`,
       cancel_url: `${origin}/settings?checkout=cancel`,
-    });
+    };
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (customerErr: unknown) {
+      const isInvalidCustomer =
+        customerErr instanceof Error &&
+        "code" in customerErr &&
+        (customerErr as { code?: string }).code === "resource_missing";
+      if (isInvalidCustomer && sessionParams.customer) {
+        session = await stripe.checkout.sessions.create({
+          ...sessionParams,
+          customer: undefined,
+          customer_email: user?.email || undefined,
+        });
+      } else {
+        throw customerErr;
+      }
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (e) {
